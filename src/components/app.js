@@ -11,11 +11,11 @@ class App extends React.Component {
   constructor (props) {
     super(props)
     this.state = {
+      address: null,
       isLoading: true,
       metamaskOff: false,
       name: "",
-      publicAddress: "",
-      privateKey: null,
+      box: null,
       ethereumProvider: null,
       id: null,
       added_file_hash: null,
@@ -51,17 +51,17 @@ class App extends React.Component {
     })
   }
 
-  async create(newNode, id, pubKey, privKey) {
+  async create(pubString) {
 
-    return createIPFSobj(newNode, id, pubKey, privKey)
-                    .then(({ipfs, privateKey}) => {
-                      return this.setStatePromise({ipfs, privateKey})
+    return createIPFSobj(pubString)
+                    .then(({ipfs}) => {
+                      return this.setStatePromise({ipfs})
                     })
   }
 
   async getProfile() {
     let self = this;
-    let globalNode, address, ethereumProvider;
+    let address, ethereumProvider;
     try {
       ethereumProvider = window.web3.currentProvider
       address = await this.getEthAccounts(window.web3)
@@ -78,30 +78,21 @@ class App extends React.Component {
       console.log(err)
       return;
     }
-    let profile = await Box.getProfile(address)
     return self.setStatePromise({
-      name: profile.name,
+      address,
       ethereumProvider,
       publicAddress: address
     })
   }
 
-  setBoxValues(box) {
+  setIds() {
     let node = this.state.ipfs,
         self = this;
     return new Promise((resolve, reject) => {
       node.once('ready', async () => {
         let id = await node.id()
-        self.setStatePromise({
-                                id: id.id
-                              })
+        self.setStatePromise({id: id.id})
             .then(() => {
-              return box.public.set('ipfsid', id.id)
-            }).then(() => {
-              return box.public.set('ipfspubkey', id.publicKey)
-            }).then(() => {
-              return box.private.set('ipfsprivkey', self.state.privateKey)
-            }).then(() => {
               resolve("Success")
             })
       })
@@ -114,34 +105,14 @@ class App extends React.Component {
                   .then((box) => {
                     return new Promise((resolve, reject) => {
                       box.onSyncDone(async () => {
-                        let ipfsId = await box.public.get('ipfsid');
-                        if (ipfsId === null || ipfsId === undefined) {
-                          console.log("Ipfsid is null!");
-                          self.create(true)
-                              .then(() => {
-                                return self.setBoxValues(box)
-                              }).then((res) => {
-                                resolve("Success!")
-                              })
-                        } else {
-                          console.log("Inside else of init node!")
-                          console.log(ipfsId)
-                          self.setState({
-                            isLoading: false,
-                            id: ipfsId
-                          })
-                          console.log("Over here in else")
-                          let pubKey, privKey;
-                          pubKey = await box.public.get('ipfspubkey');
-                          privKey = await box.private.get('ipfsprivkey');
-                          self.create(false, ipfsId, pubKey, privKey)
-                              .then(() => {
-                                resolve("Success")
-                              })
-                        }
+                        self.create(self.state.address)
+                            .then(() => {
+                              return self.setStatePromise({box})
+                            }).then(() => {
+                              resolve("Success!")
+                            })
                       })
                     })
-
                   })
   }
 
@@ -153,69 +124,26 @@ class App extends React.Component {
         }).then((res) => {
           return new Promise((resolve, reject) => {
             self.state.ipfs.once('ready', async () => {
+              console.log("Hey!")
+              let id = await self.state.ipfs.id()
               let orbitdb = new OrbitDB(self.state.ipfs)
               let db = await orbitdb.keyvalue('myfirstdb')
+              console.log("Orbit db public key is ")
+              console.log(orbitdb.key.getPublic('hex'))
               await db.load();
               let value = db.get("value")
               console.log(db.address.toString())
-              self.setStatePromise({orbitdb, db, value})
+              self.setStatePromise({orbitdb, db, value, id: id.id})
                   .then(() => {
                     resolve("Success")
                   })
             })
           })
-
-
-          // let value = db.get("value")
-          // console.log(db.address.toString())
-          // return self.setState({orbitdb})
           
         }).then(() => {
           console.log("App is now ready")
         })
-    // self.create(true)
-    //     .then(() => {
-    //       self.state.ipfs.once('ready', () => {
-    //         console.log('IPFS node is ready')
-    //         ops()
-    //       })
-    //     })
 
-    // function ops () {
-    //   self.state.ipfs.id((err, res) => {
-    //     if (err) {
-    //       throw err
-    //     }
-    //     self.setStatePromise({
-    //       id: res.id,
-    //       version: res.agentVersion,
-    //       protocol_version: res.protocolVersion
-    //     }).then(async () => {
-    //       let orbitdb = new OrbitDB(self.state.ipfs)
-    //       let db = await orbitdb.keyvalue('myfirstdb')
-    //       await db.load();
-    //       let value = db.get("value")
-    //       console.log(db.address.toString())
-    //       return self.setState({orbitdb, db, value})
-    //     }).then(() => {
-    //       console.log("App is now ready")
-    //     }).catch((err) => {
-    //       console.log(err)
-    //     })
-    //   })
-
-    //   // node.files.add([Buffer.from(stringToUse)], (err, filesAdded) => {
-    //   //   if (err) { throw err }
-
-    //   //   const hash = filesAdded[0].hash
-    //   //   self.setState({ added_file_hash: hash })
-
-    //   //   node.files.cat(hash, (err, data) => {
-    //   //     if (err) { throw err }
-    //   //     self.setState({ added_file_contents: data.toString() })
-    //   //   })
-    //   // })
-    // }
   }
   handleChange(event) {
     const name = event.target.name
@@ -231,8 +159,12 @@ class App extends React.Component {
 
   async handleUrlSubmit(event) {
     console.log(this.state.receiveurl)
+    let ipfs = this.state.ipfs;
+    let networkPeers = ipfs.swarm.peers()
     let db2 = await this.state.orbitdb.keyvalue(this.state.receiveurl)
     await db2.load()
+    let databasePeers = await ipfs.pubsub.peers(db2.address.toString())
+    console.log(databasePeers)
     this.setState({value: db2.get("value")})
     db2.events.on('replicated', async () => {
       const result = db2.get('value')
