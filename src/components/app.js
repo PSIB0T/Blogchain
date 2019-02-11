@@ -179,7 +179,8 @@ class App extends React.Component {
           <Switch>
             <Route 
               path="/profile/:nick"
-              render={(props) => <ProfFriend {...props}/>}
+              render={(props) => <ProfFriend {...props} 
+              orbitdb={this.state.orbitdb}/>}
             />
             <Route 
               path="/profile"
