@@ -10,6 +10,8 @@ const SetNo = require('./SetNo')
 const Navigation = require('./Navigation')
 const Profile = require('./Profile')
 const KeyStore = require('./../utils/Keystore');
+const Search = require('./Search')
+const ProfFriend = require('./ProfFriend');
 let {createIPFSobj} = require('./../utils/IpfsUtil')
 
 
@@ -32,7 +34,8 @@ class App extends React.Component {
       ipfs: null,
       orbitdb: null,
       db: null,
-      value: null
+      value: null,
+      searchField: ""
     }
   }
 
@@ -165,13 +168,19 @@ class App extends React.Component {
       this.setState({value: result})
     })
   }
+  
 
   render () {
     return (
       <BrowserRouter>
         <div>
           <Navigation />
+          <Search />
           <Switch>
+            <Route 
+              path="/profile/:nick"
+              render={(props) => <ProfFriend {...props}/>}
+            />
             <Route 
               path="/profile"
               render={(props) => 
