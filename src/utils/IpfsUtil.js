@@ -55,7 +55,7 @@ export function createIPFSobj (newNode, id, pubKey, privKey) {
                         }
                     }
                 })
-                resolve({ipfs})
+                resolve({ipfs, privateKey:tempVar.privKey})
             })
 
         

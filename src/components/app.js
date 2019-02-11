@@ -15,10 +15,9 @@ class App extends React.Component {
       metamaskOff: false,
       name: "",
       publicAddress: "",
+      privateKey: null,
       ethereumProvider: null,
       id: null,
-      version: null,
-      protocol_version: null,
       added_file_hash: null,
       added_file_contents: null,
       receiveurl: "",
@@ -52,14 +51,12 @@ class App extends React.Component {
     })
   }
 
-  async create() {
+  async create(newNode, id, pubKey, privKey) {
 
-    return createIPFSobj(false, "QmXMrn2WKrWp9xdLWBKu2V8dth5R3emp6MPhrgiFRdfgBZ",
-                          "CAASpgIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDpOsOBI06wuq4Z0pGEifwHE234PhB6y4+g4ukdzQ3Z1Oe7iyCihuECJW3wr3ic3MWUWF/lpbc6RMTOjqgmTA0Y2BFSQs3AifpuUmcoeAUPu1b6rn2J34OiVNE6ZZJ/oVS7M6e+zLjmxqloB4RLXjZNdj2cCLGVYO27VCgvEyjLFtxCY+gnFRYP2XwQ2U0v6s9ZqEeHIEbrFY8e0Qm7GE/pp5cT4N8ZPJKVY7lL0NEqieRYpBNMG9a7tbmDNMzXDuFqmTmZvR8PvTKgFSwuTFfQ4TyzTnLffStmADj3MmH/IafKmDuqcf9j6K9Maoq2Cm0UYvCqlF5HHY0PjWCtYHGvAgMBAAE="
-                          ,"CAASqQkwggSlAgEAAoIBAQDpOsOBI06wuq4Z0pGEifwHE234PhB6y4+g4ukdzQ3Z1Oe7iyCihuECJW3wr3ic3MWUWF/lpbc6RMTOjqgmTA0Y2BFSQs3AifpuUmcoeAUPu1b6rn2J34OiVNE6ZZJ/oVS7M6e+zLjmxqloB4RLXjZNdj2cCLGVYO27VCgvEyjLFtxCY+gnFRYP2XwQ2U0v6s9ZqEeHIEbrFY8e0Qm7GE/pp5cT4N8ZPJKVY7lL0NEqieRYpBNMG9a7tbmDNMzXDuFqmTmZvR8PvTKgFSwuTFfQ4TyzTnLffStmADj3MmH/IafKmDuqcf9j6K9Maoq2Cm0UYvCqlF5HHY0PjWCtYHGvAgMBAAECggEAJg29emONYk6DO5lcvthYs7ra1Yci3zY5cBG14XPkj6cqTDJOF9aT/eqnfn7S2h03a5Xjx697Ltmrltw12VHNTUFryhU2RvT8VGXDiRnUEZYKggpYV1eNvb3DCZkrBwIGtiiedQYoIRdG6r9XOYjcqVTihoPwnaPcBhWcHNoubLw1ZK7HcIuFJaBNnpewJawuzn6tlFoYyk2GpJiySc/XZiQ17glD7qks4qwCuG6EguLHVEOWZbb8G4ja9bknESrz8EbA28cFN9ZA7pJ3J2u+sPT41VH/uA9YYVCVWlyTgg6DOEpS8YX156ZVmrJzU8Lstgu4qcWN7NZ5JwUA0qTQkQKBgQD2Dr/VKhJKVD4O6S8gAU3I0a/iuxom7Fnf7EsZ+FBodBSgQzu730sdwvcneYMhzArrEMpkCo6Mo8AAGBI5J1WJ2BUdalxYLV0yUhPN2rDI7tZYJjbvhXsVHbpwQoFc5BgldJyekKg+3w68m5z4NqSMK+n7ZUrKy6tnPYUyNQPkuQKBgQDyp1G27YWqBUMyw/3O6wtVbJH/Ksosb0uwrcNGoVUUHAVBmbhQpNxTz6ZB/fEno3Z4NtqyvoOlP4LYEqu3Ip2p8ozkp0blmpbCchMjoFETSISEfkbFf7appYwVGkAeKBWd2UL/9NNds0Rb9T+sik8ZdQsHSU3kiWTWOqZjAUOlpwKBgQDU4/gIOAlxNCgpgInceCRTz1ENq/K5oJ82RdzI0HbJmT3LV8CUEWONkYWEKvdRQ5hiv7lNC3FAr+FMc4c42haBWGsUc1UImd9bzXYDEucIQtVDmXTIkkXnBDyuKmyA8X0O0zE7ZE+dbiLy/vS2MZj3Cnu8nmwywDtB7RGUWhhPSQKBgQC3FGUD9uv9nuDXoaaTAyZW+oahFoDZy9M457HJTZpqhMW2fCvjtK+EEMzpR5c3CA8vnnudlz6uZF/tdRDYKSb5/cYuEsPcIqoS5YzpOWFSgklxyfDNvJFuKDisB1VPK4E7ypvRkMAVF1fBZiX3oZcSpwt+IOHDR6KsPC4jzuViSwKBgQDOBZuR2unBip7oBhrdNRiUZ0+NL+lj0DVDjC4aVuSoQ80pXAW7qzRdJaMcDe2Xo7Kmy+a4w7fS+T7wPA8Vu4R3X2xbjP4I4eCurwvipXzDgdGrIIzHhbW/RkaKQcCq/SaqfkcqeMWe3ZRN2o8ZlpyFoEf2AwtiAFD+/ouPn6Vptw==")
-      .then(({ipfs}) => {
-        return this.setStatePromise({ipfs})
-      })
+    return createIPFSobj(newNode, id, pubKey, privKey)
+                    .then(({ipfs, privateKey}) => {
+                      return this.setStatePromise({ipfs, privateKey})
+                    })
   }
 
   async getProfile() {
@@ -89,65 +86,136 @@ class App extends React.Component {
     })
   }
 
+  setBoxValues(box) {
+    let node = this.state.ipfs,
+        self = this;
+    return new Promise((resolve, reject) => {
+      node.once('ready', async () => {
+        let id = await node.id()
+        self.setStatePromise({
+                                id: id.id
+                              })
+            .then(() => {
+              return box.public.set('ipfsid', id.id)
+            }).then(() => {
+              return box.public.set('ipfspubkey', id.publicKey)
+            }).then(() => {
+              return box.private.set('ipfsprivkey', self.state.privateKey)
+            }).then(() => {
+              resolve("Success")
+            })
+      })
+    })
+  }
+
   async initializeNode() {
-    Box.openBox(this.state.publicAddress, this.state.ethereumProvider)
-        .then((box) => {
-          box.onSyncDone(async () => {
-            console.log("Synced with box!")
-            
-          })
-        })
+    let self = this;
+    return Box.openBox(this.state.publicAddress, this.state.ethereumProvider)
+                  .then((box) => {
+                    return new Promise((resolve, reject) => {
+                      box.onSyncDone(async () => {
+                        let ipfsId = await box.public.get('ipfsid');
+                        if (ipfsId === null || ipfsId === undefined) {
+                          console.log("Ipfsid is null!");
+                          self.create(true)
+                              .then(() => {
+                                return self.setBoxValues(box)
+                              }).then((res) => {
+                                resolve("Success!")
+                              })
+                        } else {
+                          console.log("Inside else of init node!")
+                          console.log(ipfsId)
+                          self.setState({
+                            isLoading: false,
+                            id: ipfsId
+                          })
+                          console.log("Over here in else")
+                          let pubKey, privKey;
+                          pubKey = await box.public.get('ipfspubkey');
+                          privKey = await box.private.get('ipfsprivkey');
+                          self.create(false, ipfsId, pubKey, privKey)
+                              .then(() => {
+                                resolve("Success")
+                              })
+                        }
+                      })
+                    })
+
+                  })
   }
 
   componentDidMount () {
     const self = this
-    self.getProfile()
+    this.getProfile()
         .then(() => {
-          this.initializeNode()
-        })
-    self.create(true)
-        .then(() => {
-          self.state.ipfs.once('ready', () => {
-            console.log('IPFS node is ready')
-            ops()
+          return this.initializeNode()
+        }).then((res) => {
+          return new Promise((resolve, reject) => {
+            self.state.ipfs.once('ready', async () => {
+              let orbitdb = new OrbitDB(self.state.ipfs)
+              let db = await orbitdb.keyvalue('myfirstdb')
+              await db.load();
+              let value = db.get("value")
+              console.log(db.address.toString())
+              self.setStatePromise({orbitdb, db, value})
+                  .then(() => {
+                    resolve("Success")
+                  })
+            })
           })
-        })
 
-    function ops () {
-      self.state.ipfs.id((err, res) => {
-        if (err) {
-          throw err
-        }
-        self.setStatePromise({
-          id: res.id,
-          version: res.agentVersion,
-          protocol_version: res.protocolVersion
-        }).then(async () => {
-          let orbitdb = new OrbitDB(self.state.ipfs)
-          let db = await orbitdb.keyvalue('myfirstdb')
-          await db.load();
-          let value = db.get("value")
-          console.log(db.address.toString())
-          return self.setState({orbitdb, db, value})
+
+          // let value = db.get("value")
+          // console.log(db.address.toString())
+          // return self.setState({orbitdb})
+          
         }).then(() => {
           console.log("App is now ready")
-        }).catch((err) => {
-          console.log(err)
         })
-      })
+    // self.create(true)
+    //     .then(() => {
+    //       self.state.ipfs.once('ready', () => {
+    //         console.log('IPFS node is ready')
+    //         ops()
+    //       })
+    //     })
 
-      // node.files.add([Buffer.from(stringToUse)], (err, filesAdded) => {
-      //   if (err) { throw err }
+    // function ops () {
+    //   self.state.ipfs.id((err, res) => {
+    //     if (err) {
+    //       throw err
+    //     }
+    //     self.setStatePromise({
+    //       id: res.id,
+    //       version: res.agentVersion,
+    //       protocol_version: res.protocolVersion
+    //     }).then(async () => {
+    //       let orbitdb = new OrbitDB(self.state.ipfs)
+    //       let db = await orbitdb.keyvalue('myfirstdb')
+    //       await db.load();
+    //       let value = db.get("value")
+    //       console.log(db.address.toString())
+    //       return self.setState({orbitdb, db, value})
+    //     }).then(() => {
+    //       console.log("App is now ready")
+    //     }).catch((err) => {
+    //       console.log(err)
+    //     })
+    //   })
 
-      //   const hash = filesAdded[0].hash
-      //   self.setState({ added_file_hash: hash })
+    //   // node.files.add([Buffer.from(stringToUse)], (err, filesAdded) => {
+    //   //   if (err) { throw err }
 
-      //   node.files.cat(hash, (err, data) => {
-      //     if (err) { throw err }
-      //     self.setState({ added_file_contents: data.toString() })
-      //   })
-      // })
-    }
+    //   //   const hash = filesAdded[0].hash
+    //   //   self.setState({ added_file_hash: hash })
+
+    //   //   node.files.cat(hash, (err, data) => {
+    //   //     if (err) { throw err }
+    //   //     self.setState({ added_file_contents: data.toString() })
+    //   //   })
+    //   // })
+    // }
   }
   handleChange(event) {
     const name = event.target.name
@@ -177,8 +245,6 @@ class App extends React.Component {
       <div style={{ textAlign: 'center' }}>
         <h1>Everything is working!</h1>
         <p>Your ID is <strong>{this.state.id}</strong></p>
-        <p>Your IPFS version is <strong>{this.state.version}</strong></p>
-        <p>Your IPFS protocol version is <strong>{this.state.protocol_version}</strong></p>
         <hr />
         <p>Value of value is {this.state.value}</p>
         <div>
