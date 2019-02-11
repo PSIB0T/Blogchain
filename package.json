@@ -8,8 +8,10 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "3box": "^1.3.0",
     "ipfs": "0.33.0",
-    "orbit-db": "^0.19.9"
+    "orbit-db": "^0.19.9",
+    "peer-id": "^0.12.2"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",
