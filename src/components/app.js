@@ -1,11 +1,17 @@
 'use strict'
 
 const React = require('react')
-let {createIPFSobj} = require('./../utils/IpfsUtil')
 const OrbitDB = require('orbit-db');
 const Box = require('3box');
-const KeyStore = require('./../utils/Keystore');
 const path = require('path')
+const { BrowserRouter, Route, Switch } = require('react-router-dom')
+
+const SetNo = require('./SetNo')
+const Navigation = require('./Navigation')
+const Profile = require('./Profile')
+const KeyStore = require('./../utils/Keystore');
+let {createIPFSobj} = require('./../utils/IpfsUtil')
+
 
 const stringToUse = 'hello world from webpacked IPFS'
 
@@ -162,29 +168,35 @@ class App extends React.Component {
 
   render () {
     return (
-      <div style={{ textAlign: 'center' }}>
-        <h1>Everything is working!</h1>
-        <p>Your ID is <strong>{this.state.id}</strong></p>
-        <hr />
-        <p>Value of value is {this.state.value}</p>
+      <BrowserRouter>
         <div>
-          <label for="setno">Set number</label>
-          <input name="setno" id="setno" value={this.state.setno} onChange={this.handleChange.bind(this)}/>          
-          <button onClick={this.handleNoSubmit.bind(this)}>Submit</button>
-        </div>
-        <div>
-          <label for="receiveurl">Enter receiver url</label>
-          <input name="receiveurl" id="receiveurl" value={this.state.receiveurl} onChange={this.handleChange.bind(this)}/>
-          <button onClick={this.handleUrlSubmit.bind(this)}>Submit</button>
+          <Navigation />
+          <Switch>
+            <Route 
+              path="/profile"
+              render={(props) => 
+              <Profile 
+                orbitdb={this.state.orbitdb}
+                box={this.state.box}/>}
+            />
+            <Route 
+              path="/"
+              render={(props) => 
+                <SetNo id={this.state.id} 
+                value={this.state.value}
+                handleChange={this.handleChange.bind(this)} 
+                handleNoSubmit={this.handleNoSubmit.bind(this)}
+                receiveurl={this.state.receiveurl}
+                handleUrlSubmit={this.handleUrlSubmit.bind(this)}
+              />
+            }
+            />
+ 
+
+          </Switch>
         </div>
 
-        <br />
-        <br />
-        <p>
-          Contents of this file: <br />
-          {this.state.added_file_contents}
-        </p>
-      </div>
+      </BrowserRouter>
     )
   }
 }
