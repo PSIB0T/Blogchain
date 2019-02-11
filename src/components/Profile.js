@@ -1,5 +1,34 @@
 const React = require('react')
 
+const styled = require('styled-components')
+
+const InputComponent = styled.default('input')`
+                            width: 50%;
+                            height:100px;
+                            padding: 12px 20px;
+                            font-size:20px;
+                            box-sizing: border-box;
+                            border: 2px solid #ccc;
+                            border-radius: 4px;
+                            background-color: #f8f8f8;
+                        `
+const ButtonComponent = styled.default('button')`
+                            background-color: rgb(27, 165, 207); /* Green */
+                            border: none;
+                            color: white;
+                            padding: 20px;
+                            text-align: center;
+                            text-decoration: none;
+                            display: inline-block;
+                            font-size: 20px;
+                            margin: 10px;
+                            cursor: pointer;
+
+                        `
+const DivComponent = styled.default('div')`
+                            margin:10px 0px 0px 258px;
+                        `
+
 class Profile extends React.Component {
     constructor(props) {
         super(props)
@@ -168,8 +197,8 @@ class Profile extends React.Component {
         return (
                 <div>
                     <p>Welcome back, {this.state.nick}</p>
-                    <input name="post" id="post" value={this.props.receiveurl} onChange={this.handleChange.bind(this)}/>
-                    <button onClick={this.handlePostSubmit.bind(this)}>Submit</button>
+                    <InputComponent name="post" id="post" value={this.props.receiveurl} onChange={this.handleChange.bind(this)} />
+                    <ButtonComponent onClick={this.handlePostSubmit.bind(this)}>Submit</ButtonComponent>
                     <br />
                     <div>
                     {
@@ -184,9 +213,9 @@ class Profile extends React.Component {
 
     render(){
         return (
-            <div>
+            <DivComponent>
                 {this.renderProfile()}
-            </div>
+            </DivComponent>
         );
     }
 }

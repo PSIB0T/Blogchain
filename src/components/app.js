@@ -13,6 +13,7 @@ const KeyStore = require('./../utils/Keystore');
 const Search = require('./Search')
 const ProfFriend = require('./ProfFriend');
 let {createIPFSobj} = require('./../utils/IpfsUtil')
+const SideNav = require('./Sidenav')
 
 
 const stringToUse = 'hello world from webpacked IPFS'
@@ -174,8 +175,9 @@ class App extends React.Component {
     return (
       <BrowserRouter>
         <div>
-          <Navigation />
-          <Search />
+          {/* <Navigation /> */}
+          {/* <Search /> */}
+          <SideNav />
           <Switch>
             <Route 
               path="/profile/:nick"
