@@ -4,6 +4,8 @@ const React = require('react')
 let {createIPFSobj} = require('./../utils/IpfsUtil')
 const OrbitDB = require('orbit-db');
 const Box = require('3box');
+const KeyStore = require('./../utils/Keystore');
+const path = require('path')
 
 const stringToUse = 'hello world from webpacked IPFS'
 
@@ -85,20 +87,6 @@ class App extends React.Component {
     })
   }
 
-  setIds() {
-    let node = this.state.ipfs,
-        self = this;
-    return new Promise((resolve, reject) => {
-      node.once('ready', async () => {
-        let id = await node.id()
-        self.setStatePromise({id: id.id})
-            .then(() => {
-              resolve("Success")
-            })
-      })
-    })
-  }
-
   async initializeNode() {
     let self = this;
     return Box.openBox(this.state.publicAddress, this.state.ethereumProvider)
@@ -124,9 +112,9 @@ class App extends React.Component {
         }).then((res) => {
           return new Promise((resolve, reject) => {
             self.state.ipfs.once('ready', async () => {
-              console.log("Hey!")
               let id = await self.state.ipfs.id()
-              let orbitdb = new OrbitDB(self.state.ipfs)
+              let keystore = KeyStore().create(null, this.state.box)
+              let orbitdb = new OrbitDB(self.state.ipfs,null, {keystore})
               let db = await orbitdb.keyvalue('myfirstdb')
               console.log("Orbit db public key is ")
               console.log(orbitdb.key.getPublic('hex'))
