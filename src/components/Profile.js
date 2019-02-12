@@ -73,8 +73,22 @@ class Profile extends React.Component {
             globalDB: null,
             nick: "",
             post: "",
+            profDb: null,
             postDb: null,
-            posts: []
+            dob: null,
+            posts: [],
+            opProps: [
+                {
+                    name: 'Name',
+                    prop: 'nick',
+                    show: true
+                },
+                {
+                    name: 'Born',
+                    prop: 'dob',
+                    show: true
+                }
+            ]
         }
     }
 
@@ -184,7 +198,8 @@ class Profile extends React.Component {
                                 loading: false,
                                 noAccount: false,
                                 profDb,
-                                nick: profDb.get('nick')
+                                nick: profDb.get('nick'),
+                                dob: profDb.get('dob')
                             }).then(() => {
                                 this.fetchPosts()
                             })
@@ -199,6 +214,21 @@ class Profile extends React.Component {
                     })
     }
 
+    async editProp(prop) {
+        let oldVal = this.state.profDb.get(prop)
+        console.log(oldVal)
+        return this.setStatePromise({loading: true})
+                    .then(() => {
+                        return this.state.profDb.set(prop, this.state[prop])
+                    }).then(() => {
+                        console.log("Edit made successfully")
+                        return this.setStatePromise({loading: false})
+                    }).catch((err) => {
+                        console.log(err)
+                        return this.setStatePromise({loading: false})
+                    })
+    }
+
     componentDidMount() {
         if (this.props.globalDB !== null) {
             this.loadGlobalDb(this.props)
@@ -210,6 +240,24 @@ class Profile extends React.Component {
             console.log("Inside willreceiveprops")
             this.loadGlobalDb(nextProps)
         }
+    }
+
+    handleEdit(event) {
+        const propName = event.target.id;
+        let opProps = this.state.opProps.reduce((accumulator, currentProp) => {
+            if(currentProp.prop === propName) {
+                if (currentProp.show === false) {
+                    this.editProp(propName)
+                }
+                currentProp.show = currentProp.show === true?false:true;
+            }
+            accumulator.push(currentProp)
+            return accumulator;
+        }, [])
+        this.setState({
+            opProps 
+        })
+        // propFind.show = false;   
     }
 
     renderProfile() {
@@ -228,8 +276,14 @@ class Profile extends React.Component {
                 <div>
                     <DescComponent>
                         <UlComponent>
-                            <LiComponent><InnerDiv>Name:</InnerDiv><InnerDiv>{this.state.nick}</InnerDiv></LiComponent>
-                            <LiComponent><InnerDiv>Born:</InnerDiv><InnerDiv>{this.state.dob}</InnerDiv></LiComponent>
+                            {this.state.opProps.map((opProp) => {
+                                return (
+                                    <LiComponent><InnerDiv>{opProp.name}</InnerDiv>
+                                        {opProp.show?<InnerDiv>{this.state[opProp.prop]}</InnerDiv>:<InnerDiv><input name={opProp.prop  } value={this.state[opProp.prop]} onChange={this.handleChange.bind(this)}/></InnerDiv>}
+                                        <div><button id={opProp.prop} onClick={this.handleEdit.bind(this)}>Edit</button></div>
+                                    </LiComponent>
+                                );
+                            })}
                         </UlComponent>
                     </DescComponent>
                     <InputComponent name="post" id="post" value={this.props.receiveurl} onChange={this.handleChange.bind(this)} />

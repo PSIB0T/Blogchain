@@ -106,7 +106,11 @@ class ProfFriend extends React.Component {
         posts.sort((a, b) => {
             return a._id - b._id
         })
-        this.setState({posts, loading: false, nick: this.state.profDb.get('nick')})
+        this.setState({posts, 
+            loading: false, 
+            nick: this.state.profDb.get('nick'),            
+            dob: this.state.profDb.get('dob')
+        })
     }
 
     renderProfile() {
