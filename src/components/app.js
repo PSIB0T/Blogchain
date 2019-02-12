@@ -5,6 +5,7 @@ const OrbitDB = require('orbit-db');
 const Box = require('3box');
 const path = require('path')
 const { BrowserRouter, Route, Switch } = require('react-router-dom')
+const styled = require('styled-components')
 
 const SetNo = require('./SetNo')
 const Navigation = require('./Navigation')
@@ -16,7 +17,9 @@ let {createIPFSobj} = require('./../utils/IpfsUtil')
 const SideNav = require('./Sidenav')
 
 
-const stringToUse = 'hello world from webpacked IPFS'
+const DivComponent = styled.default('div')`
+                            margin:10px 0px 0px 258px;
+                        `
 
 class App extends React.Component {
   constructor (props) {
@@ -174,7 +177,7 @@ class App extends React.Component {
   render () {
     return (
       <BrowserRouter>
-        <div>
+        <DivComponent>
           {/* <Navigation /> */}
           {/* <Search /> */}
           <SideNav />
@@ -183,6 +186,10 @@ class App extends React.Component {
               path="/profile/:nick"
               render={(props) => <ProfFriend {...props} 
               orbitdb={this.state.orbitdb}/>}
+            />
+            <Route
+              path="/search"
+              component={Search}
             />
             <Route 
               path="/profile"
@@ -206,7 +213,7 @@ class App extends React.Component {
  
 
           </Switch>
-        </div>
+        </DivComponent>
 
       </BrowserRouter>
     )

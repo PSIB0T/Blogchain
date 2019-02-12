@@ -1,5 +1,19 @@
 const React = require('react')
 
+const styled = require('styled-components')
+
+const PostsComponent = styled.default('div')`
+                            font-size: 20px;
+                            resize: none;
+                        `
+const ParaComponent = styled.default('p')`
+                            margin-top: 10px;
+                            margin-bottom: 10px;
+                            padding: 15px;
+                            box-shadow: 1px 2px 8px #888888;
+
+                        `
+
 class ProfFriend extends React.Component {
     constructor(props) {
         super(props)
@@ -80,13 +94,13 @@ class ProfFriend extends React.Component {
                 <div>
                     <p>Name:- {this.state.nick}</p>
                     <br />
-                    <div>
+                    <PostsComponent>
                     {
                         this.state.posts.map(post => {
-                            return (<p>{post.post}</p>)
+                            return (<ParaComponent>{post.post}</ParaComponent>)
                         })
                     }
-                    </div>
+                    </PostsComponent>
                 </div>
                 )
     }

@@ -25,8 +25,42 @@ const ButtonComponent = styled.default('button')`
                             cursor: pointer;
 
                         `
-const DivComponent = styled.default('div')`
-                            margin:10px 0px 0px 258px;
+const PostsComponent = styled.default('div')`
+                            font-size: 20px;
+                            resize: none;
+                        `
+const ParaComponent = styled.default('p')`
+                            margin-top: 10px;
+                            margin-bottom: 10px;
+                            padding: 15px;
+                            box-shadow: 1px 2px 8px #888888;
+
+                        `
+const DescComponent = styled.default('div')`
+                            width: 50%;
+                            height:auto;
+                            padding: 12px 20px;
+                            font-size:20px;
+                            margin: 8px 0;
+                            box-sizing: border-box;
+                            border: 2px solid #ccc;
+                            border-radius: 4px;
+                            background-color: #f8f8f8;
+                        `
+const UlComponent = styled.default('ul')`
+                            margin: 0;
+                            padding: 0;
+                            display: flex;
+                            flex-direction: column;
+                        `
+const LiComponent = styled.default('li')`
+                            margin: 5px;
+                            list-style-type: none;
+                            display: flex;
+                            justify-content: space-around
+                        `
+const InnerDiv = styled.default('div')`
+                            min-width: 100px;
                         `
 
 class Profile extends React.Component {
@@ -196,26 +230,31 @@ class Profile extends React.Component {
         } 
         return (
                 <div>
-                    <p>Welcome back, {this.state.nick}</p>
+                    <DescComponent>
+                        <UlComponent>
+                            <LiComponent><InnerDiv>Name:</InnerDiv><InnerDiv>{this.state.nick}</InnerDiv></LiComponent>
+                            <LiComponent><InnerDiv>Born:</InnerDiv><InnerDiv>{this.state.dob}</InnerDiv></LiComponent>
+                        </UlComponent>
+                    </DescComponent>
                     <InputComponent name="post" id="post" value={this.props.receiveurl} onChange={this.handleChange.bind(this)} />
                     <ButtonComponent onClick={this.handlePostSubmit.bind(this)}>Submit</ButtonComponent>
                     <br />
-                    <div>
+                    <PostsComponent>
                     {
                         this.state.posts.map(post => {
-                            return (<p>{post.post}</p>)
+                            return (<ParaComponent>{post.post}</ParaComponent>)
                         })
                     }
-                    </div>
+                    </PostsComponent>
                 </div>
                 )
     }
 
     render(){
         return (
-            <DivComponent>
+            <div>
                 {this.renderProfile()}
-            </DivComponent>
+            </div>
         );
     }
 }

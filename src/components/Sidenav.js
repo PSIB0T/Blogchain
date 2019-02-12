@@ -35,8 +35,9 @@ class Sidenav extends React.Component {
         return (
             <div>
                 <SideNavStyle>
-                    <SideNavAnchor><NavLink to="/" className="navLink">SetNo 69</NavLink></SideNavAnchor>
+                    <SideNavAnchor><NavLink to="/" className="navLink">Home</NavLink></SideNavAnchor>
                     <SideNavAnchor><NavLink to="/profile" className="navLink">Profile</NavLink></SideNavAnchor>
+                    <SideNavAnchor><NavLink to="/search" className="navLink">Search</NavLink></SideNavAnchor>
                 </SideNavStyle>
             </div>
         )
