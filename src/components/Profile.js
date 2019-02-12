@@ -116,7 +116,7 @@ class Profile extends React.Component {
         let profDb = await this.props.orbitdb.keyvalue(nick);
         profDb.set('nick', nick)
               .then(() => {
-                return this.state.globalDB.set(nick, profDb.address.toString())
+                return this.props.globalDB.set(nick, profDb.address.toString())
               }).then(() => {
                 return this.props.box.public.set('nick', nick)
               }).then(() => {

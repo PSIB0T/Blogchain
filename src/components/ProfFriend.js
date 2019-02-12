@@ -92,16 +92,17 @@ class ProfFriend extends React.Component {
 
     async fetchPosts() {
         let postDb
+        await this.state.profDb.load()
         if (this.state.postDb === null) {
             let postDbUrl = this.state.profDb.get('postDBUrl')
             console.log("postdb url is")
             console.log(postDbUrl)
             postDb = await this.props.orbitdb.docs(postDbUrl)
-            await postDb.load()
             this.setState({postDb})
         } else {
             postDb = this.state.postDb
         }
+        await postDb.load()
         let posts = postDb.query((doc) => true)
         posts.sort((a, b) => {
             return a._id - b._id
