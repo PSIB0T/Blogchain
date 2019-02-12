@@ -193,24 +193,20 @@ class Profile extends React.Component {
     }
 
     async loadGlobalDb(props) {
-        let globalDB = await props.orbitdb.keyvalue(`/orbitdb/QmeuGQ4KdmdFD8WTN5r5mvF3s6pk1sXG5nXdYxP1dorW7K/globalDatabase`)
-        return globalDB.load()
-                        .then(() => {
-                            console.log(globalDB.address.toString())
-                            return this.setStatePromise({globalDB})
-                        }).then(() => {
-                            return this.loadFromBox(props)
-                        })
+        return props.globalDB.load()
+                    .then(() => {
+                        return this.loadFromBox(props)
+                    })
     }
 
     componentDidMount() {
-        if (this.props.orbitdb !== null) {
+        if (this.props.globalDB !== null) {
             this.loadGlobalDb(this.props)
         }
     }
 
     componentWillReceiveProps(nextProps) {
-        if (nextProps.orbitdb !== null && nextProps.box !== null && this.props.orbitdb !== nextProps.orbitdb) {
+        if (nextProps.orbitdb !== null && nextProps.box !== null && nextProps.globalDB !== null && this.props.globalDB !== nextProps.globalDB) {
             console.log("Inside willreceiveprops")
             this.loadGlobalDb(nextProps)
         }

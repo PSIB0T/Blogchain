@@ -32,13 +32,12 @@ class App extends React.Component {
       box: null,
       ethereumProvider: null,
       id: null,
-      added_file_hash: null,
-      added_file_contents: null,
       receiveurl: "",
       ipfs: null,
       orbitdb: null,
       db: null,
       value: null,
+      globalDB: null,
       searchField: ""
     }
   }
@@ -71,6 +70,15 @@ class App extends React.Component {
     return createIPFSobj(pubString)
                     .then(({ipfs}) => {
                       return this.setStatePromise({ipfs})
+                    })
+  }
+  async loadGlobalDb(props) {
+    let globalDB = await this.state.orbitdb.keyvalue(`/orbitdb/QmeuGQ4KdmdFD8WTN5r5mvF3s6pk1sXG5nXdYxP1dorW7K/globalDatabase`)
+    return globalDB.load()
+                    .then(() => {
+                        console.log("globaldb address")
+                        console.log(globalDB.address.toString())
+                        return this.setStatePromise({globalDB})
                     })
   }
 
@@ -142,6 +150,9 @@ class App extends React.Component {
           })
           
         }).then(() => {
+          return this.loadGlobalDb()
+        })
+        .then(() => {
           console.log("App is now ready")
         })
 
@@ -185,7 +196,9 @@ class App extends React.Component {
             <Route 
               path="/profile/:nick"
               render={(props) => <ProfFriend {...props} 
-              orbitdb={this.state.orbitdb}/>}
+              orbitdb={this.state.orbitdb}
+              globalDB={this.state.globalDB}
+              />}
             />
             <Route
               path="/search"
@@ -196,7 +209,9 @@ class App extends React.Component {
               render={(props) => 
               <Profile 
                 orbitdb={this.state.orbitdb}
-                box={this.state.box}/>}
+                box={this.state.box}
+                globalDB={this.state.globalDB}
+                />}
             />
             <Route 
               path="/"

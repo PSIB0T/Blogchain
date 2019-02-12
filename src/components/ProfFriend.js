@@ -13,6 +13,32 @@ const ParaComponent = styled.default('p')`
                             box-shadow: 1px 2px 8px #888888;
 
                         `
+const DescComponent = styled.default('div')`
+                            width: 50%;
+                            height:auto;
+                            padding: 12px 20px;
+                            font-size:20px;
+                            margin: 8px 0;
+                            box-sizing: border-box;
+                            border: 2px solid #ccc;
+                            border-radius: 4px;
+                            background-color: #f8f8f8;
+                        `
+const UlComponent = styled.default('ul')`
+                            margin: 0;
+                            padding: 0;
+                            display: flex;
+                            flex-direction: column;
+                        `
+const LiComponent = styled.default('li')`
+                            margin: 5px;
+                            list-style-type: none;
+                            display: flex;
+                            justify-content: space-around
+                        `
+const InnerDiv = styled.default('div')`
+                            min-width: 100px;
+                        `
 
 class ProfFriend extends React.Component {
     constructor(props) {
@@ -27,13 +53,13 @@ class ProfFriend extends React.Component {
         }
     }
     componentDidMount() {
-        if (this.props.orbitdb !== null) {
+        if (this.props.globalDB !== null) {
             this.loadGlobalDb(this.props)
         }
     }
 
     componentWillReceiveProps(nextProps) {
-        if (nextProps.orbitdb !== null && this.props.orbitdb !== nextProps.orbitdb) {
+        if (nextProps.orbitdb !== null   && nextProps.globalDB !== null && this.props.globalDB !== nextProps.globalDB) {
             console.log("Inside willreceiveprops")
             this.loadGlobalDb(nextProps)
         }
@@ -52,16 +78,13 @@ class ProfFriend extends React.Component {
     }
 
     async loadGlobalDb(props) {
-        let globalDB = await props.orbitdb.keyvalue(`/orbitdb/QmeuGQ4KdmdFD8WTN5r5mvF3s6pk1sXG5nXdYxP1dorW7K/globalDatabase`)
-        return globalDB.load()
-                        .then(() => {
-                            console.log(globalDB.address.toString())
-                            return this.setStatePromise({globalDB})
-                        }).then(async () => {
-                            let profDbUrl = await this.state.globalDB.get(this.props.match.params.nick)
-                            let profDb = await this.props.orbitdb.keyvalue(profDbUrl)
-                            await profDb.load()
+        return props.globalDB.load()
+                        .then(async () => {
+                            let profDbUrl = props.globalDB.get(this.props.match.params.nick)
+                            let profDb = await props.orbitdb.keyvalue(profDbUrl)
                             return this.setStatePromise({profDb})
+                        }).then(() => {
+                            return this.state.profDb.load()
                         }).then(() => {
                             return this.fetchPosts()
                         })
@@ -92,7 +115,12 @@ class ProfFriend extends React.Component {
         } 
         return (
                 <div>
-                    <p>Name:- {this.state.nick}</p>
+                    <DescComponent>
+                        <UlComponent>
+                            <LiComponent><InnerDiv>Name:</InnerDiv><InnerDiv>{this.state.nick}</InnerDiv></LiComponent>
+                            <LiComponent><InnerDiv>Born:</InnerDiv><InnerDiv>{this.state.dob}</InnerDiv></LiComponent>
+                        </UlComponent>
+                    </DescComponent>
                     <br />
                     <PostsComponent>
                     {
