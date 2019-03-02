@@ -14,7 +14,12 @@ class TempSession extends React.Component {
             isLoading: true,
             errorLoading: false,
             orbitdb: null,
-            ipfs: null
+            ipfs: null,
+            tag: "",
+            post: "",
+            tagList: new Set(),
+            postList: [],
+            tagDb: null
         }
         this.setStatePromise = this.props.setStatePromise
     }
@@ -32,8 +37,26 @@ class TempSession extends React.Component {
         await tagDb.load()
         tagDb.events.on('replicated', () => {
             console.log("Replicated!")
+            this.loadPosts()
         })
-        console.log(tagDb.address.toString())
+        return this.setStatePromise({tagDb})
+    }
+
+    loadPosts() {
+        let posts = this.state.tagDb.query((doc) => true),
+            tags = new Set(posts.map(post => post.tag))
+        posts.sort((a, b) => {
+            return a._id - b._id
+        })
+        let postByTag = posts.reduce((accumulator, currentvalue) => {
+            accumulator[currentvalue.tag] = accumulator[currentvalue.tag] || []
+            accumulator[currentvalue.tag].push(currentvalue.post)
+            return accumulator
+        }, {})
+        return this.setStatePromise({
+            tagList: tags,
+            postList: postByTag
+        })
     }
 
     componentDidMount() {
@@ -51,13 +74,48 @@ class TempSession extends React.Component {
                     })
                 })
 
-            }).then((res) => {
-                this.loadTagDb()
-                console.log(res)
+            }).then(() => {
+                return this.loadTagDb()
+            }).then(() => {
+                return this.loadPosts()
             }).catch((err) => {
                 this.setStatePromise({isLoading: false, errorLoading: true})
                 console.log(err)
             })
+    }
+
+    handleChange(event) {
+        const name = event.target.name
+        this.setState({[name]: event.target.value});
+    }
+
+    handlePostSubmit() {
+        let tag = this.state.tag,
+            post = this.state.post;
+        this.state.tagDb.put({
+            _id: Date.now(),
+            tag,
+            post
+        }).then((res) => {
+            this.loadPosts()
+        })
+    }
+
+    renderPosts() {
+        let tagList = Array.from(this.state.tagList)
+        return (
+        <div>
+            {tagList.map((tag) => {
+                return (
+                    <div>
+                        <h2>{tag}</h2>
+                        {this.state.postList[tag].map(post => {
+                            return (<p>{post}</p>)
+                        })}
+                    </div>
+                );
+            })}
+        </div>);
     }
 
     loadComponent() {
@@ -66,7 +124,17 @@ class TempSession extends React.Component {
         } if (this.state.err) {
             return (<p>Error loading...</p>)
         } 
-        return (<p>Success!</p>)
+        return (
+        <div>
+            <label for="tag">Tag</label>
+            <input name="tag" id="tag" value={this.state.tag} onChange={this.handleChange.bind(this)} />
+            <br />
+            <label for="post">Post</label>
+            <input name="post" id="post" value={this.state.post} onChange={this.handleChange.bind(this)} />
+            <br />
+            <button onClick={this.handlePostSubmit.bind(this)}>Submit</button>
+            {this.renderPosts()}
+        </div>)
     }
 
     render() {
