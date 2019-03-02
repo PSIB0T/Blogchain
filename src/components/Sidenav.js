@@ -32,12 +32,13 @@ const SideNavAnchor = styled.default('a')`
 
 class Sidenav extends React.Component {
     render() {
+        let match = this.props.match
         return (
             <div>
                 <SideNavStyle>
-                    <SideNavAnchor><NavLink to="/" className="navLink">Home</NavLink></SideNavAnchor>
-                    <SideNavAnchor><NavLink to="/profile" className="navLink">Profile</NavLink></SideNavAnchor>
-                    <SideNavAnchor><NavLink to="/search" className="navLink">Search</NavLink></SideNavAnchor>
+                    <SideNavAnchor><NavLink to={`${match.url}`} className="navLink">Home</NavLink></SideNavAnchor>
+                    <SideNavAnchor><NavLink to={`${match.url}/profile`} className="navLink">Profile</NavLink></SideNavAnchor>
+                    <SideNavAnchor><NavLink to={`${match.url}/search`} className="navLink">Search</NavLink></SideNavAnchor>
                 </SideNavStyle>
             </div>
         )

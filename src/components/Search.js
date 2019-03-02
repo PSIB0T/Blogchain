@@ -31,6 +31,8 @@ class Search extends React.Component {
         this.state = {
             search: ""
         }
+        console.log("Props search")
+        console.log(this.props)
     }
 
     handleChange(event) {
@@ -39,8 +41,10 @@ class Search extends React.Component {
     }
 
     handleSearch() {
+        let match = this.props.match2
+
         let search = this.state.search;
-        this.props.history.push('/profile/' + search)
+        this.props.history.push(match.path + '/profile/' + search)
     }
 
     render() {
