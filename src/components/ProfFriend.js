@@ -49,19 +49,20 @@ class ProfFriend extends React.Component {
             posts: [],
             postDb: null,
             globalDB: null,
-            profDb: null
+            profDb: null,
+            error: false
         }
     }
     componentDidMount() {
         if (this.props.globalDB !== null) {
-            this.loadGlobalDb(this.props)
+            this.loadProfile(this.props)
         }
     }
 
     componentWillReceiveProps(nextProps) {
         if (nextProps.orbitdb !== null   && nextProps.globalDB !== null && this.props.globalDB !== nextProps.globalDB) {
             console.log("Inside willreceiveprops")
-            this.loadGlobalDb(nextProps)
+            this.loadProfile(nextProps)
         }
     }
 
@@ -77,47 +78,52 @@ class ProfFriend extends React.Component {
         })
     }
 
-    async loadGlobalDb(props) {
-        return props.globalDB.load()
-                        .then(async () => {
-                            let profDbUrl = props.globalDB.get(this.props.match.params.nick)
-                            let profDb = await props.orbitdb.keyvalue(profDbUrl)
-                            return this.setStatePromise({profDb})
-                        }).then(() => {
-                            return this.state.profDb.load()
-                        }).then(() => {
-                            return this.fetchPosts()
+    async loadProfile(props) {
+        let profDbUrl = props.globalDB.get(this.props.match.params.nick)
+        if (profDbUrl === null) {
+            return this.setStatePromise({loading: false, error: true})
+        }
+        let profDb = await props.orbitdb.keyvalue(profDbUrl)
+        return this.setStatePromise({profDb})
+                    .then(() => {
+                        return this.state.profDb.load()
+                    }).then(() => {
+                        let postDbUrl = this.state.profDb.get('postDBUrl')
+                        console.log("postdb url is")
+                        console.log(postDbUrl)
+                        return this.props.orbitdb.docs(postDbUrl)
+                    }).then((postDb) => {
+                        let nick = this.state.profDb.get('nick'),
+                            dob = this.state.profDb.get('dob')
+                        return this.setStatePromise({postDb, nick, dob})
+                    }).then(() => {
+                        return this.state.postDb.load()
+                    }).then(() => {
+                        this.state.postDb.events.on('replicated', () => {
+                            console.log("Friend postdb replicated!")
+                            this.fetchPosts()
                         })
+                        return this.fetchPosts()
+                    })
     }
 
     async fetchPosts() {
-        let postDb
-        await this.state.profDb.load()
-        if (this.state.postDb === null) {
-            let postDbUrl = this.state.profDb.get('postDBUrl')
-            console.log("postdb url is")
-            console.log(postDbUrl)
-            postDb = await this.props.orbitdb.docs(postDbUrl)
-            this.setState({postDb})
-        } else {
-            postDb = this.state.postDb
-        }
-        await postDb.load()
+        let postDb = this.state.postDb
         let posts = postDb.query((doc) => true)
         posts.sort((a, b) => {
             return a._id - b._id
         })
         this.setState({posts, 
-            loading: false, 
-            nick: this.state.profDb.get('nick'),            
-            dob: this.state.profDb.get('dob')
+            loading: false
         })
     }
 
     renderProfile() {
         if (this.state.loading === true ) {
             return (<p>Loading...</p>)
-        } 
+        } if (this.state.error === true) {
+            return (<p>Error! Profile of this nick does not exist</p>)
+        }
         return (
                 <div>
                     <DescComponent>

@@ -24,24 +24,23 @@ class App extends React.Component {
   }
 
   render () {
+    console.log(window.location.pathname)
     return (
       <div>
         <BrowserRouter>
             <div>
               <Switch>
                 <Route 
-                  path="/main"
+                  path={`/main`}
                   render={(props) => <MainProfile {...props} setStatePromise={this.setStatePromise} />}
                 />
                 <Route
-                  path="/temp"
+                  path={`/temp`}
                   render={(props) => <TempSession {...props} setStatePromise={this.setStatePromise} />}
                 />
                 <Route 
                   path="/"
                   component={Landing}
-                />
-                }
                 />
   
 

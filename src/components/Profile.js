@@ -133,6 +133,19 @@ class Profile extends React.Component {
               })
     }
 
+    async deleteAccount() {
+        let match = this.props.match2
+        console.log(this.props.match2)
+        let nick = this.state.nick
+        this.props.globalDB.set(nick, null)
+            .then(() => {
+                return this.props.box.public.remove('profDb')
+            }).then(() => {
+                console.log("Success!")
+                this.props.history.push(match.path)
+            })
+    }
+
     async handlePostSubmit(event) {
         console.log(this.state.post)
         let postDb
@@ -208,10 +221,7 @@ class Profile extends React.Component {
     }
 
     async loadGlobalDb(props) {
-        return props.globalDB.load()
-                    .then(() => {
-                        return this.loadFromBox(props)
-                    })
+        return this.loadFromBox(props)
     }
 
     async editProp(prop) {
@@ -288,6 +298,7 @@ class Profile extends React.Component {
                     </DescComponent>
                     <InputComponent name="post" id="post" value={this.props.receiveurl} onChange={this.handleChange.bind(this)} />
                     <ButtonComponent onClick={this.handlePostSubmit.bind(this)}>Submit</ButtonComponent>
+                    <ButtonComponent onClick={this.deleteAccount.bind(this)}>Delete profile</ButtonComponent>
                     <br />
                     <PostsComponent>
                     {

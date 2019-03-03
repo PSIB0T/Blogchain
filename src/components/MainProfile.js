@@ -76,6 +76,9 @@ class MainProfile extends React.Component {
                     .then(() => {
                         console.log("globaldb address")
                         console.log(globalDB.address.toString())
+                        globalDB.events.on('replicated', () => {
+                          console.log("Globaldb replicated!")
+                        })
                         return this.setStatePromise({globalDB})
                     })
   }
@@ -177,10 +180,6 @@ class MainProfile extends React.Component {
     let databasePeers = await ipfs.pubsub.peers(db2.address.toString())
     console.log(databasePeers)
     this.setState({value: db2.get("value")})
-    db2.events.on('replicated', async () => {
-      const result = db2.get('value')
-      this.setState({value: result})
-    })
   }
   
 
@@ -210,10 +209,12 @@ class MainProfile extends React.Component {
             <Route 
               path={`${match.path}/profile`}
               render={(props) => 
-              <Profile 
+              <Profile
+                {...props}
                 orbitdb={this.state.orbitdb}
                 box={this.state.box}
                 globalDB={this.state.globalDB}
+                match2={this.props.match}
                 />}
             />
             <Route 
