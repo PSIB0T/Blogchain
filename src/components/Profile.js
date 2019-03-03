@@ -2,6 +2,8 @@ const React = require('react')
 
 const styled = require('styled-components')
 
+const _ = require('lodash')
+
 const InputComponent = styled.default('input')`
                             width: 50%;
                             height:100px;
@@ -76,6 +78,9 @@ class Profile extends React.Component {
             profDb: null,
             postDb: null,
             dob: null,
+            tagDbGlobal: null,
+            tagString: "",
+            tags: [],
             posts: [],
             opProps: [
                 {
@@ -146,6 +151,62 @@ class Profile extends React.Component {
             })
     }
 
+    async handleTags(newTags) {
+        let tempTags
+        newTags.forEach(async (tag) => {
+            tempTags = this.state.tagDbGlobal.get(tag)
+            console.log(tag)
+            console.log(tempTags)
+            if (tempTags === null || tempTags === undefined) {
+                tempTags = new Set()
+            } else {
+                tempTags = new Set(tempTags)
+            }
+            tempTags.add(this.state.profDb.address.toString())
+            
+            await this.state.tagDbGlobal.set(tag, Array.from(tempTags))
+        })
+
+        let arrayDifference = _.difference(this.state.tags, newTags);
+        arrayDifference.forEach(async (tag) => {
+            tempTags = this.state.tagDbGlobal.get(tag)
+            tempTags = new Set(tempTags)
+            tempTags.delete(this.state.profDb.address.toString())
+            await this.state.tagDbGlobal.set(tag, Array.from(tempTags))
+        })
+
+        return Promise.resolve("success")
+    }
+
+    async handleTagSubmit(event) {
+        tags = this.state.tagString.split(",").map((tag) => {
+            return tag.trim()
+        })
+        if (!_.isEqual(_.sortBy(tags), _.sortBy(this.state.tags))) {
+            this.state.profDb.set('tags', tags)
+                        .then(() => {
+                            return this.handleTags(tags)
+                        })
+                        .then(() => {
+                            console.log("Tags set successfully")
+                            console.log(this.state.tagDbGlobal.get('cars'))
+                            this.loadTags()
+                        })
+        }
+
+    }
+
+    async loadTags() {
+        let tags = this.state.profDb.get('tags')
+        console.log(tags)
+        if (tags !== null || tags !== undefined) {
+            console.log("Inside loadtags")
+            let tagString = tags.join(", ")
+            console.log(tagString)
+            this.setStatePromise(({tags, tagString}))
+        }
+    }
+
     async handlePostSubmit(event) {
         console.log(this.state.post)
         let postDb
@@ -191,7 +252,7 @@ class Profile extends React.Component {
         posts.sort((a, b) => {
             return a._id - b._id
         })
-        this.setState({posts})
+        return this.setStatePromise({posts})
     }
 
     async loadFromBox(props) {
@@ -222,6 +283,15 @@ class Profile extends React.Component {
 
     async loadGlobalDb(props) {
         return this.loadFromBox(props)
+                    .then(async () => {
+                        let tagDbGlobal = await this.props.orbitdb.keyvalue('/orbitdb/QmXgzPRyXnEPvYGrkwb6Kkmc5VCL1EYavAjDAy63vEETmV/tagdbGlobal')
+                        console.log(tagDbGlobal.address.toString())
+                        await tagDbGlobal.load()
+                        return this.setStatePromise({tagDbGlobal})
+                    })
+                    .then(() => {
+                        this.loadTags()
+                    })
     }
 
     async editProp(prop) {
@@ -277,7 +347,7 @@ class Profile extends React.Component {
             return (
                 <div>
                     <p>Welcome user! please enter your nick</p>
-                    <input name="nick" id="nick" value={this.props.receiveurl} onChange={this.handleChange.bind(this)}/>
+                    <input name="nick" id="nick" value={this.state.nick} onChange={this.handleChange.bind(this)}/>
                     <button onClick={this.handleNickSubmit.bind(this)}>Submit</button>
                 </div>
             )
@@ -296,8 +366,12 @@ class Profile extends React.Component {
                             })}
                         </UlComponent>
                     </DescComponent>
-                    <InputComponent name="post" id="post" value={this.props.receiveurl} onChange={this.handleChange.bind(this)} />
+                    <InputComponent name="tagString" id="tagString" value={this.state.tagString} onChange={this.handleChange.bind(this)} />
+                    <ButtonComponent onClick={this.handleTagSubmit.bind(this)}>Submit Tags</ButtonComponent>
+                    <br />
+                    <InputComponent name="post" id="post" value={this.state.post} onChange={this.handleChange.bind(this)} />
                     <ButtonComponent onClick={this.handlePostSubmit.bind(this)}>Submit</ButtonComponent>
+
                     <ButtonComponent onClick={this.deleteAccount.bind(this)}>Delete profile</ButtonComponent>
                     <br />
                     <PostsComponent>
