@@ -11,7 +11,8 @@ const SetNo = require('./SetNo')
 const Navigation = require('./Navigation')
 const Profile = require('./Profile')
 const KeyStore = require('./../utils/Keystore');
-const Search = require('./Search')
+const SearchByUsername = require('./SearchByUsername')
+const SearchByTag = require('./SearchByTag')
 const ProfFriend = require('./ProfFriend');
 let {createIPFSobj} = require('./../utils/IpfsUtil')
 const SideNav = require('./Sidenav')
@@ -202,7 +203,13 @@ class MainProfile extends React.Component {
             />
             <Route
               path={`${match.path}/search`}
-              render={(props) => <Search {...props}
+              render={(props) => <SearchByUsername {...props}
+                match2={this.props.match}
+              />}
+            />
+            <Route
+              path={`${match.path}/searchbytag`}
+              render={(props) => <SearchByTag {...props}
                 match2={this.props.match}
               />}
             />

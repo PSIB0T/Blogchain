@@ -199,7 +199,7 @@ class Profile extends React.Component {
     async loadTags() {
         let tags = this.state.profDb.get('tags')
         console.log(tags)
-        if (tags !== null || tags !== undefined) {
+        if (tags !== null && tags !== undefined) {
             console.log("Inside loadtags")
             let tagString = tags.join(", ")
             console.log(tagString)
@@ -287,6 +287,9 @@ class Profile extends React.Component {
                         let tagDbGlobal = await this.props.orbitdb.keyvalue('/orbitdb/QmXgzPRyXnEPvYGrkwb6Kkmc5VCL1EYavAjDAy63vEETmV/tagdbGlobal')
                         console.log(tagDbGlobal.address.toString())
                         await tagDbGlobal.load()
+                        tagDbGlobal.events.on('replicated', () => {
+                            console.log("Replicated!")
+                        })
                         return this.setStatePromise({tagDbGlobal})
                     })
                     .then(() => {

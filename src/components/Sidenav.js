@@ -39,6 +39,7 @@ class Sidenav extends React.Component {
                     <SideNavAnchor><NavLink to={`${match.url}`} className="navLink">Home</NavLink></SideNavAnchor>
                     <SideNavAnchor><NavLink to={`${match.url}/profile`} className="navLink">Profile</NavLink></SideNavAnchor>
                     <SideNavAnchor><NavLink to={`${match.url}/search`} className="navLink">Search</NavLink></SideNavAnchor>
+                    <SideNavAnchor><NavLink to={`${match.url}/searchbytag`} className="navLink">Search by tag</NavLink></SideNavAnchor>
                 </SideNavStyle>
             </div>
         )

@@ -28,23 +28,14 @@ const ButtonComponent = styled.default('button')`
 class Search extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {
-            search: ""
-        }
-        console.log("Props search")
-        console.log(this.props)
     }
 
     handleChange(event) {
-        const name = event.target.name
-        this.setState({[name]: event.target.value});
+        this.props.handleChange(event)
     }
 
     handleSearch() {
-        let match = this.props.match2
-
-        let search = this.state.search;
-        this.props.history.push(match.path + '/profile/' + search)
+        this.props.handleSearch(event)
     }
 
     render() {
