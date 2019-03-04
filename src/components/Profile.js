@@ -80,6 +80,7 @@ class Profile extends React.Component {
             dob: null,
             tagString: "",
             tags: [],
+            postTagList: "",
             posts: [],
             opProps: [
                 {
@@ -212,23 +213,13 @@ class Profile extends React.Component {
     }
 
     async handlePostSubmit(event) {
-        console.log(this.state.post)
-        let postDb
-        let post = this.state.post;
-        if (this.state.postDb === null) {
-            let postDbUrl = this.state.profDb.get('postDBUrl')
-            if (postDbUrl === undefined) {
-                postDb = await this.props.orbitdb.docs(this.state.nick + "-posts", {write: ['*']})
-                await this.state.profDb.set('postDBUrl', postDb.address.toString())
-            } else {
-                postDb = await this.props.orbitdb.docs(postDbUrl)
-                await postDb.load()
-            }
-            this.setState({postDb})
-        } else {
-            postDb = this.state.postDb
-        }
-        postDb.put({_id: Date.now(), post})
+        let post = this.state.post,
+            postDb = this.state.postDb;
+            tags = this.state.postTagList.split(",").map(tag => {
+                return tag.trim()
+            })
+        
+        postDb.put({_id: Date.now(), post, tags})
                 .then((res) => {
                     console.log("Successfully inserted posts")
                     this.fetchPosts()
@@ -367,6 +358,8 @@ class Profile extends React.Component {
                     </DescComponent>
                     <InputComponent name="tagString" id="tagString" value={this.state.tagString} onChange={this.handleChange.bind(this)} />
                     <ButtonComponent onClick={this.handleTagSubmit.bind(this)}>Submit Tags</ButtonComponent>
+                    <br />
+                    <InputComponent name="postTagList" id="postTagList" value={this.state.postTagList} onChange={this.handleChange.bind(this)} />
                     <br />
                     <InputComponent name="post" id="post" value={this.state.post} onChange={this.handleChange.bind(this)} />
                     <ButtonComponent onClick={this.handlePostSubmit.bind(this)}>Submit</ButtonComponent>
