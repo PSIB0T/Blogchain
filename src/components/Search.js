@@ -34,7 +34,7 @@ class Search extends React.Component {
         this.props.handleChange(event)
     }
 
-    handleSearch() {
+    handleSearch(event) {
         this.props.handleSearch(event)
     }
 

@@ -10,6 +10,7 @@ const styled = require('styled-components')
 const SetNo = require('./SetNo')
 const Navigation = require('./Navigation')
 const Profile = require('./Profile')
+const TagList = require('./TagList')
 const KeyStore = require('./../utils/Keystore');
 const SearchByUsername = require('./SearchByUsername')
 const SearchByTag = require('./SearchByTag')
@@ -35,6 +36,7 @@ class MainProfile extends React.Component {
       receiveurl: "",
       ipfs: null,
       orbitdb: null,
+      tagDbGlobal: null,
       db: null,
       value: null,
       globalDB: null,
@@ -71,7 +73,7 @@ class MainProfile extends React.Component {
                       return this.setStatePromise({ipfs})
                     })
   }
-  async loadGlobalDb(props) {
+  async loadGlobalDb() {
     let globalDB = await this.state.orbitdb.keyvalue(`/orbitdb/QmeuGQ4KdmdFD8WTN5r5mvF3s6pk1sXG5nXdYxP1dorW7K/globalDatabase`)
     return globalDB.load()
                     .then(() => {
@@ -81,7 +83,18 @@ class MainProfile extends React.Component {
                           console.log("Globaldb replicated!")
                         })
                         return this.setStatePromise({globalDB})
+                    }).then(() => {
+                      return this.loadTagDb()
                     })
+  }
+
+  async loadTagDb() {
+    let tagDbGlobal = await this.state.orbitdb.docs('/orbitdb/QmNwa1jH1F9AmX8P2s7yywp2SBJdrsXwTM4VVyevR2tRrg/tagdbGlobal')
+    await tagDbGlobal.load()
+    tagDbGlobal.events.on('replicated', () => {
+        console.log("Replicated!")
+    })
+    return this.setStatePromise({tagDbGlobal})
   }
 
   async getProfile() {
@@ -201,6 +214,15 @@ class MainProfile extends React.Component {
               globalDB={this.state.globalDB}
               />}
             />
+            <Route 
+              path={`${match.path}/tag/:tag`}
+              render={(props) => <TagList {...props} 
+              orbitdb={this.state.orbitdb}
+              globalDB={this.state.globalDB}
+              tagDbGlobal={this.state.tagDbGlobal}
+              setStatePromise={this.setStatePromise}
+              />}
+            />
             <Route
               path={`${match.path}/search`}
               render={(props) => <SearchByUsername {...props}
@@ -222,6 +244,7 @@ class MainProfile extends React.Component {
                 box={this.state.box}
                 globalDB={this.state.globalDB}
                 match2={this.props.match}
+                tagDbGlobal={this.state.tagDbGlobal}
                 />}
             />
             <Route 

@@ -78,7 +78,6 @@ class Profile extends React.Component {
             profDb: null,
             postDb: null,
             dob: null,
-            tagDbGlobal: null,
             tagString: "",
             tags: [],
             posts: [],
@@ -152,27 +151,24 @@ class Profile extends React.Component {
     }
 
     async handleTags(newTags) {
-        let tempTags
+        let tempTags,
+            profdburl = this.state.profDb.address.toString()
+        console.log(profdburl)
         newTags.forEach(async (tag) => {
-            tempTags = this.state.tagDbGlobal.get(tag)
-            console.log(tag)
+            tempTags = this.props.tagDbGlobal.query(doc => doc.tag === tag && doc.profile === profdburl)
+            console.log("temptag for " + tag)
             console.log(tempTags)
-            if (tempTags === null || tempTags === undefined) {
-                tempTags = new Set()
-            } else {
-                tempTags = new Set(tempTags)
+            if (_.isEmpty(tempTags)) {
+                await this.props.tagDbGlobal.put({_id: Date.now(), tag, profile: profdburl})
             }
-            tempTags.add(this.state.profDb.address.toString())
-            
-            await this.state.tagDbGlobal.set(tag, Array.from(tempTags))
         })
 
         let arrayDifference = _.difference(this.state.tags, newTags);
         arrayDifference.forEach(async (tag) => {
-            tempTags = this.state.tagDbGlobal.get(tag)
-            tempTags = new Set(tempTags)
-            tempTags.delete(this.state.profDb.address.toString())
-            await this.state.tagDbGlobal.set(tag, Array.from(tempTags))
+            tempTags = this.props.tagDbGlobal.query(doc => doc.tag === tag && doc.profile === profdburl)
+            if (!_.isEmpty(tempTags)) {
+                await this.props.tagDbGlobal.del(tempTags[0]._id)
+            }
         })
 
         return Promise.resolve("success")
@@ -189,7 +185,6 @@ class Profile extends React.Component {
                         })
                         .then(() => {
                             console.log("Tags set successfully")
-                            console.log(this.state.tagDbGlobal.get('cars'))
                             this.loadTags()
                         })
         }
@@ -261,39 +256,34 @@ class Profile extends React.Component {
         return this.props.box.public.get('profDb')
                     .then(async (dbAddress) => {
                         if (dbAddress === null || dbAddress === undefined) {
-                            this.setState({
+                            return this.setStatePromise({
                                 loading: false,
                                 noAccount: true
                             })
                         } else {
                             let profDb = await this.props.orbitdb.keyvalue(dbAddress)
                             await profDb.load()
-                            this.setStatePromise({
+                            return this.setStatePromise({
                                 loading: false,
                                 noAccount: false,
                                 profDb,
                                 nick: profDb.get('nick'),
                                 dob: profDb.get('dob')
-                            }).then(() => {
-                                this.fetchPosts()
                             })
                         }
+                    }).then(() => {
+                        if (this.state.noAccount === true)
+                            return Promise.reject({code: 404, error: "No account"})
+                        return this.fetchPosts()
                     })
     }
 
     async loadGlobalDb(props) {
         return this.loadFromBox(props)
-                    .then(async () => {
-                        let tagDbGlobal = await this.props.orbitdb.keyvalue('/orbitdb/QmXgzPRyXnEPvYGrkwb6Kkmc5VCL1EYavAjDAy63vEETmV/tagdbGlobal')
-                        console.log(tagDbGlobal.address.toString())
-                        await tagDbGlobal.load()
-                        tagDbGlobal.events.on('replicated', () => {
-                            console.log("Replicated!")
-                        })
-                        return this.setStatePromise({tagDbGlobal})
-                    })
                     .then(() => {
                         this.loadTags()
+                    }).catch(err => {
+                        console.log(err)
                     })
     }
 
@@ -313,13 +303,13 @@ class Profile extends React.Component {
     }
 
     componentDidMount() {
-        if (this.props.globalDB !== null) {
+        if (this.props.tagDbGlobal !== null) {
             this.loadGlobalDb(this.props)
         }
     }
 
     componentWillReceiveProps(nextProps) {
-        if (nextProps.orbitdb !== null && nextProps.box !== null && nextProps.globalDB !== null && this.props.globalDB !== nextProps.globalDB) {
+        if (nextProps.tagDbGlobal !== null && this.props.tagDbGlobal !== nextProps.tagDbGlobal) {
             console.log("Inside willreceiveprops")
             this.loadGlobalDb(nextProps)
         }

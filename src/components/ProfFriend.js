@@ -78,6 +78,26 @@ class ProfFriend extends React.Component {
         })
     }
 
+    async loadProfileAsync() {
+        await this.state.profDb.load()
+        if (this.state.profDb.get('postDBUrl') === null || this.state.profDb.get('postDBUrl') === undefined) {
+
+            return new Promise((resolve, reject) => {
+                console.log("afasfafaef")
+                this.state.profDb.events.on('replicate', (address) => {
+                    console.log("Replicating db!")
+                } )
+                this.state.profDb.events.on('replicated', () => {
+                    console.log("Profdb replicated")
+                    return this.state.profDb.load()
+                })
+            })
+
+        } else {
+            return Promise.resolve("Replicated")
+        }
+    }
+
     async loadProfile(props) {
         let profDbUrl = props.globalDB.get(this.props.match.params.nick)
         if (profDbUrl === null) {
@@ -86,7 +106,7 @@ class ProfFriend extends React.Component {
         let profDb = await props.orbitdb.keyvalue(profDbUrl)
         return this.setStatePromise({profDb})
                     .then(() => {
-                        return this.state.profDb.load()
+                        return this.loadProfileAsync()
                     }).then(() => {
                         let postDbUrl = this.state.profDb.get('postDBUrl')
                         console.log("postdb url is")

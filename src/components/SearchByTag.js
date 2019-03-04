@@ -20,7 +20,7 @@ class SearchByTag extends React.Component {
         let match = this.props.match2
 
         let search = this.state.search;
-        this.props.history.push(match.path + '/profile/' + search)
+        this.props.history.push(match.path + '/tag/' + search)
     }
 
     render() {
