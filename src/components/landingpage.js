@@ -14,14 +14,8 @@ class Landing extends Component {
             <div className="banner-text">
               <h1>BlogChain</h1>
               <button href="#"> Sign In Using 3Box!!</button>
+              <button href="#"> Sign In Anonymously!!</button>
 
-            <hr/>
-
-        
-
-        <div className="social-links">
-        
-        </div>
             </div>
           
         </Grid>
