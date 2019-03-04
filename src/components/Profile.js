@@ -191,6 +191,15 @@ class Profile extends React.Component {
 
     }
 
+    async handlePostDelete(event) {
+        let buttonId = event.target.id
+        console.log(buttonId)
+        this.state.postDb.del(buttonId)
+                    .then(() => {
+                        this.fetchPosts()
+                    })
+    }
+
     async loadTags() {
         let tags = this.state.profDb.get('tags')
         console.log(tags)
@@ -228,21 +237,7 @@ class Profile extends React.Component {
 
     async fetchPosts() {
         let postDb
-        let post = this.state.post;
-        if (this.state.postDb === null) {
-            let postDbUrl = this.state.profDb.get('postDBUrl')
-            console.log(postDbUrl)
-            if (postDbUrl === undefined) {
-                postDb = await this.props.orbitdb.docs(this.state.nick + "-posts", {write: ['*']})
-                await this.state.profDb.set('postDBUrl', postDb.address.toString())
-            } else {
-                postDb = await this.props.orbitdb.docs(postDbUrl)
-                await postDb.load()
-            }
-            this.setState({postDb})
-        } else {
-            postDb = this.state.postDb
-        }
+        postDb = this.state.postDb;
         let posts = postDb.query((doc) => true)
         posts.sort((a, b) => {
             return a._id - b._id
@@ -271,9 +266,19 @@ class Profile extends React.Component {
                                 dob: profDb.get('dob')
                             })
                         }
-                    }).then(() => {
+                    }).then(async () => {
                         if (this.state.noAccount === true)
                             return Promise.reject({code: 404, error: "No account"})
+                        let postDbUrl = this.state.profDb.get('postDBUrl')
+                        if (postDbUrl === undefined) {
+                            postDb = await this.props.orbitdb.docs(this.state.nick + "-posts", {write: ['*']})
+                            await this.state.profDb.set('postDBUrl', postDb.address.toString())
+                        } else {
+                            postDb = await this.props.orbitdb.docs(postDbUrl)
+                            await postDb.load()
+                        }
+                        this.setStatePromise({postDb})
+                    }).then(() => {
                         return this.fetchPosts()
                     })
     }
@@ -295,7 +300,8 @@ class Profile extends React.Component {
                         return this.state.profDb.set(prop, this.state[prop])
                     }).then(() => {
                         console.log("Edit made successfully")
-                        return this.setStatePromise({loading: false})
+                        
+                        
                     }).catch((err) => {
                         console.log(err)
                         return this.setStatePromise({loading: false})
@@ -370,7 +376,10 @@ class Profile extends React.Component {
                     <PostsComponent>
                     {
                         this.state.posts.map(post => {
-                            return (<ParaComponent>{post.post}</ParaComponent>)
+                            return (<div>
+                                <ParaComponent>{post.post}</ParaComponent>
+                                <button id={post._id} onClick={this.handlePostDelete.bind(this)}>Delete</button>
+                            </div>)
                         })
                     }
                     </PostsComponent>
