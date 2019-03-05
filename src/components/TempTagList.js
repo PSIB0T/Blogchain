@@ -3,6 +3,9 @@
 const React = require('react')
 let { Grid, Cell, Card, CardTitle, CardText,  CardMenu, IconButton, Textfield } = require('react-mdl');
 let { matchPath } = require('react-router-dom')
+let ReactSpoiler = require('react-spoiler')
+let bayes = require('bayes')
+let jsonData = require('./../utils/test.json')
 let _ = require('lodash')
 
 
@@ -21,6 +24,7 @@ class TempTagList extends React.Component {
             postList: []
         }
         this.setStatePromise = this.props.setStatePromise
+        this.classifier = bayes.fromJson(JSON.stringify(jsonData))
     }
 
     loadPosts(tagFilter) {
@@ -37,7 +41,7 @@ class TempTagList extends React.Component {
         }
         let postByTag = posts.reduce((accumulator, currentvalue) => {
             accumulator[currentvalue.tag] = accumulator[currentvalue.tag] || []
-            accumulator[currentvalue.tag].push(currentvalue.post)
+            accumulator[currentvalue.tag].push({post: currentvalue.post, id: currentvalue._id, isSpam: currentvalue.isSpam})
             return accumulator
         }, {})
         return this.setStatePromise({
@@ -53,7 +57,7 @@ class TempTagList extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        console.log(this.props)
+
         const match = matchPath(this.props.history.location.pathname, {
             path: '/temp/tag/:tagId',
             exact: true,
@@ -72,14 +76,56 @@ class TempTagList extends React.Component {
 
     handlePostSubmit() {
         let tag = this.state.tag,
-            post = this.state.post;
+            post = this.state.post,
+            isSpam
+        if (this.classifier.categorize(post.toLowerCase()) === "spam") {
+            isSpam = true
+        } else {
+            isSpam = false
+        }
+        console.log("Post is spam? " + isSpam)
         this.props.tagDb.put({
             _id: Date.now(),
             tag,
-            post
+            post,
+            isSpam
         }).then((res) => {
             this.props.loadTags()
         })
+    }
+
+    deletePost(event) {
+        let id = event.target.id
+        if (id !== null && id !== undefined && id !== '') {
+            this.props.tagDb.del(id)
+                      .then(() => {
+                          this.props.loadTags()
+                      })
+        }
+    }
+
+    renderPostCard(tag, post) {
+        return(
+            <div>
+                <Card shadow={5} style={{width:800,marginLeft:20}}>
+                    <CardTitle style={{color: 'black', height: '100px'}} >{tag}</CardTitle>
+                    <CardText>
+                        {post.post}
+                    </CardText>
+
+                    <CardMenu style={{color: 'black'}}>
+                    </CardMenu>
+                </Card>  
+                <IconButton style={{marginLeft:20,marginTop:20,marginBottom:20 }} name="thumb_up" />
+                <IconButton style={{marginLeft:10,marginTop:20,marginBottom:20 }} name="thumb_down" />
+                <IconButton style={{marginLeft: 30,marginTop:20,marginBottom:20 }} id={post.id} name="delete" onClick={this.deletePost.bind(this)}/>
+                
+
+                <div>
+                    <input style={{marginLeft:20,marginBottom:20, height: 25 , width: 800,borderRadius:10,borderColor:'gray'}} type="text" placeholder="Comment..!!" className="form-control" />
+                </div>
+            </div>
+        )
     }
 
     renderPosts() {
@@ -90,26 +136,17 @@ class TempTagList extends React.Component {
                 return (
                     <div>
                         {this.state.postList[tag].map(post => {
-                            return (
-                                <div>
-                                    <Card shadow={5} style={{width:800,marginLeft:20}}>
-                                        <CardTitle style={{color: 'black', height: '100px'}} >{tag}</CardTitle>
-                                        <CardText>
-                                            {post}
-                                        </CardText>
+                            if (post.isSpam === true) {
+                                return (
+                                    <ReactSpoiler blur={7}>
+                                        {this.renderPostCard(tag, post)}
+                                    </ReactSpoiler>
+                                )
+                            } else {
+                                return (<div>{this.renderPostCard(tag, post)}</div>)
+                            }
+                            
 
-                                        <CardMenu style={{color: 'black'}}>
-                                        </CardMenu>
-                                    </Card>  
-                                    <IconButton style={{marginLeft:20,marginTop:20,marginBottom:20 }} name="thumb_up" />
-                                    <IconButton style={{marginLeft:10,marginTop:20,marginBottom:20 }} name="thumb_down" />
-                                    
-
-                                    <div>
-                                        <input style={{marginLeft:20,marginBottom:20, height: 25 , width: 800,borderRadius:10,borderColor:'gray'}} type="text" placeholder="Comment..!!" className="form-control" />
-                                    </div>
-                                </div>
-                            )
                         })}
                     </div>
                 );

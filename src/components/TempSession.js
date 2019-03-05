@@ -119,10 +119,6 @@ class TempSession extends React.Component {
                                 width={430}
                                 onSelect={this.action.bind(this)}
                             />  
-                            <Link to="/resume">Profile</Link>
-                            <Link to="/aboutme">About </Link>
-                            <Link to="/projects">SubCategories</Link>
-                            <Link to="/contact">Search</Link>
                         </Navigation>
                     </Header>
                     <Switch>
