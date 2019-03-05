@@ -1,5 +1,5 @@
 const React = require('react')
-const { BrowserRouter, Route, Switch, Link } = require('react-router-dom')
+const { Router, Route, Switch, Link } = require('react-router-dom')
 const { Layout, Header, Navigation, Drawer, Content } = require('react-mdl');
 const FuzzySearch = require('./FuzzySearch')
 const TempTagList = require('./TempTagList')
@@ -109,7 +109,6 @@ class TempSession extends React.Component {
     render () {
         let match = this.props.match
         return (
-            <BrowserRouter>
                 <div>
                     <Header className="header-color" title={<Link style={{textDecoration: 'none', color: 'white'}} to="/">Home</Link>} scroll>
                         <Navigation>
@@ -150,7 +149,6 @@ class TempSession extends React.Component {
                         />
                     </Switch>
                 </div>
-            </BrowserRouter>
         );
     }
 }

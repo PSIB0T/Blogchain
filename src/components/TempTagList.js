@@ -1,9 +1,7 @@
 'use strict'
 
 const React = require('react')
-const OrbitDB = require('orbit-db');
 let { Grid, Cell, Card, CardTitle, CardText,  CardMenu, IconButton, Textfield } = require('react-mdl');
-let {createIPFSobj} = require('./../utils/IpfsUtil')
 let { matchPath } = require('react-router-dom')
 let _ = require('lodash')
 
