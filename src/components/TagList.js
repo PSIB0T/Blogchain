@@ -30,7 +30,9 @@ class TagList extends React.Component {
         let profDb = await props.orbitdb.keyvalue(profDbUrl)
         return profDb.load()
                     .then(() => {
+                        console.log("dsdeibfi")
                         if (profDb.get('postDBUrl') === null || profDb.get('postDBUrl') === undefined) {
+                            console.log("sdsdsdsdsd")
                             profDb.events.on('replicate', (address) => {
                                 console.log("Replicating db!")
                             })
@@ -66,6 +68,7 @@ class TagList extends React.Component {
 
     async loadTags(props) {
         let tags = props.tagDbGlobal.query(doc => doc.tag === this.props.match.params.tag)
+        console.log(props.tagDbGlobal.query(doc => true))
         let profileUrls = tags = tags.map(tag => {
             return tag.profile
         })

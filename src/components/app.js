@@ -2,6 +2,7 @@
 
 const React = require('react')
 const { BrowserRouter, Route, Switch, Link } = require('react-router-dom')
+const { Layout, Header, Navigation, Drawer, Content } = require('react-mdl');
 const MainProfile = require('./MainProfile')
 const TempSession = require('./TempSession')
 const Landing = require('./Landing')
@@ -27,8 +28,9 @@ class App extends React.Component {
     console.log(window.location.pathname)
     return (
       <div>
+        <div className="page-content" />
         <BrowserRouter>
-            <div>
+            <Layout>
               <Switch>
                 <Route 
                   path={`/main`}
@@ -45,7 +47,7 @@ class App extends React.Component {
   
 
               </Switch>
-            </div>
+            </Layout>
 
 
         </BrowserRouter>

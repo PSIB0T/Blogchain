@@ -1,13 +1,24 @@
 const React = require('react')
 const {NavLink} = require('react-router-dom')
+const { Grid, Cell } = require('react-mdl');
 
 class Landing extends React.Component {
     render() {
         return (
-            <div>
-              <NavLink to={`/main`}>Login using metamask and 3box</NavLink>
-              <br />
-              <NavLink to={`/temp`}>Login without metamask</NavLink>
+
+            <div style={{width: '100%', margin: 'auto'}}>
+                <Grid className="landing-grid">
+                    
+                    
+
+                    <div className="banner-text">
+                        <h1>BlogChain</h1>
+                        <button href="#"><NavLink to={`/main`}>Sign In Using 3Box!!</NavLink></button>
+                        <button href="#"><NavLink to={`/temp`}>Sign In Anonymously!!</NavLink></button>
+
+                    </div>
+                    
+                </Grid>
             </div>
         );
     }

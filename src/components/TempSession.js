@@ -1,26 +1,50 @@
-'use strict'
-
 const React = require('react')
+const { BrowserRouter, Route, Switch, Link } = require('react-router-dom')
+const { Layout, Header, Navigation, Drawer, Content } = require('react-mdl');
+const FuzzySearch = require('./FuzzySearch')
+const TempTagList = require('./TempTagList')
+let {createIPFSobj} = require('./../utils/IpfsUtil')
 const OrbitDB = require('orbit-db');
 
-let {createIPFSobj} = require('./../utils/IpfsUtil')
-
-
 class TempSession extends React.Component {
-    constructor(props) {
-        super(props);
 
+    constructor(props) {
+        super(props)
         this.state = {
-            isLoading: true,
-            errorLoading: false,
+            tagDb: null,
+            tagList: [],
             orbitdb: null,
             ipfs: null,
-            tag: "",
-            post: "",
-            tagList: new Set(),
-            postList: [],
-            tagDb: null
+            posts: []
         }
+
+        this.list = [{
+            id: 1,
+            title: 'The Great Gatsby',
+            author: 'F. Scott Fitzgerald'
+          }, {
+            id: 2,
+            title: 'The DaVinci Code',
+            author: 'Dan Brown'
+          }, {
+            id: 3,
+            title: 'Angels & Demons',
+            author: 'Dan Brown'
+          }];
+        this.list2 = [{
+            id: 1,
+            title: 'The Great contraception',
+            author: 'F. Scott Fitzgerald'
+            }, {
+            id: 2,
+            title: 'The gg Code',
+            author: 'Dan Brown'
+            }, {
+            id: 3,
+            title: 'Angels & fucbois',
+            author: 'Dan Brown'
+        }];
+
         this.setStatePromise = this.props.setStatePromise
     }
 
@@ -33,30 +57,25 @@ class TempSession extends React.Component {
     }
 
     async loadTagDb() {
-        let tagDb = await this.state.orbitdb.docs('/orbitdb/QmTTmfEZwHcD35Mojh468qp5iJS3Dv8QdYoGU3r6Xf3Fsv/tagdb')
+        let tagDb = await this.state.orbitdb.docs('tagdb')
         await tagDb.load()
         tagDb.events.on('replicated', () => {
             console.log("Replicated!")
-            this.loadPosts()
+            this.loadTags()
         })
         return this.setStatePromise({tagDb})
     }
 
-    loadPosts() {
-        let posts = this.state.tagDb.query((doc) => true),
-            tags = new Set(posts.map(post => post.tag))
-        posts.sort((a, b) => {
-            return a._id - b._id
+    async loadTags() {
+        let posts = this.state.tagDb.query(doc => true)
+        let tags = Array.from(new Set(posts.map(post => post.tag)))
+        tags = tags.map(tag => {
+            return {
+                title: tag
+            }
         })
-        let postByTag = posts.reduce((accumulator, currentvalue) => {
-            accumulator[currentvalue.tag] = accumulator[currentvalue.tag] || []
-            accumulator[currentvalue.tag].push(currentvalue.post)
-            return accumulator
-        }, {})
-        return this.setStatePromise({
-            tagList: tags,
-            postList: postByTag
-        })
+        console.log(tags)
+        return this.setStatePromise({tagList: tags, posts})
     }
 
     componentDidMount() {
@@ -65,7 +84,7 @@ class TempSession extends React.Component {
                 return new Promise((resolve, reject) => {
                     this.state.ipfs.once('ready', () => {
                         let orbitdb = new OrbitDB(this.state.ipfs)
-                        this.setStatePromise({orbitdb, isLoading: false})
+                        this.setStatePromise({orbitdb})
                             .then(() => {
                                 resolve("Success")
                             }).catch((err) => {
@@ -77,71 +96,61 @@ class TempSession extends React.Component {
             }).then(() => {
                 return this.loadTagDb()
             }).then(() => {
-                return this.loadPosts()
-            }).catch((err) => {
-                this.setStatePromise({isLoading: false, errorLoading: true})
-                console.log(err)
+                return this.loadTags()
             })
     }
 
-    handleChange(event) {
-        const name = event.target.name
-        this.setState({[name]: event.target.value});
+    action(event) {
+        let match = this.props.match
+        console.log(event)
+        this.props.history.push("/temp/tag/" + event.title)
     }
 
-    handlePostSubmit() {
-        let tag = this.state.tag,
-            post = this.state.post;
-        this.state.tagDb.put({
-            _id: Date.now(),
-            tag,
-            post
-        }).then((res) => {
-            this.loadPosts()
-        })
-    }
-
-    renderPosts() {
-        let tagList = Array.from(this.state.tagList)
+    render () {
+        let match = this.props.match
         return (
-        <div>
-            {tagList.map((tag) => {
-                return (
-                    <div>
-                        <h2>{tag}</h2>
-                        {this.state.postList[tag].map(post => {
-                            return (<p>{post}</p>)
-                        })}
-                    </div>
-                );
-            })}
-        </div>);
-    }
-
-    loadComponent() {
-        if (this.state.isLoading) {
-            return (<p>Loading...</p>)
-        } if (this.state.err) {
-            return (<p>Error loading...</p>)
-        } 
-        return (
-        <div>
-            <label for="tag">Tag</label>
-            <input name="tag" id="tag" value={this.state.tag} onChange={this.handleChange.bind(this)} />
-            <br />
-            <label for="post">Post</label>
-            <input name="post" id="post" value={this.state.post} onChange={this.handleChange.bind(this)} />
-            <br />
-            <button onClick={this.handlePostSubmit.bind(this)}>Submit</button>
-            {this.renderPosts()}
-        </div>)
-    }
-
-    render() {
-        return (
-          <div>
-              {this.loadComponent()}
-          </div>  
+            <BrowserRouter>
+                <div>
+                    <Header className="header-color" title={<Link style={{textDecoration: 'none', color: 'white'}} to="/">Home</Link>} scroll>
+                        <Navigation>
+                            <FuzzySearch
+                                list={this.list}
+                                list2={this.state.tagList}
+                                keys={['title']}
+                                width={430}
+                                onSelect={this.action.bind(this)}
+                            />  
+                            <Link to="/resume">Profile</Link>
+                            <Link to="/aboutme">About </Link>
+                            <Link to="/projects">SubCategories</Link>
+                            <Link to="/contact">Search</Link>
+                        </Navigation>
+                    </Header>
+                    <Switch>
+                        <Route 
+                            exact path={`/temp/tag/:tagId`}
+                            render={(props) => <TempTagList {...props} 
+                                                setStatePromise={this.setStatePromise} 
+                                                tagDb={this.state.tagDb}
+                                                orbitdb={this.state.orbitdb}
+                                                posts={this.state.posts}
+                                                loadTags={this.loadTags.bind(this)}
+                            
+                                                />}
+                        />
+                        <Route 
+                            exact path={`/temp/`}
+                            render={(props) => <TempTagList {...props} 
+                                                setStatePromise={this.setStatePromise} 
+                                                tagDb={this.state.tagDb}
+                                                orbitdb={this.state.orbitdb}
+                                                posts={this.state.posts}
+                                                loadTags={this.loadTags.bind(this)}
+                                                />}
+                        />
+                    </Switch>
+                </div>
+            </BrowserRouter>
         );
     }
 }
