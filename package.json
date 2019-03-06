@@ -1,12 +1,14 @@
 {
-  "name": "webpackipfs",
+  "name": "blogchain",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "homepage": "http://psib0t.github.io/blogchain",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "build": "webpack -p --config ./webpack.prod.config.js"
+    "build": "webpack -p --config ./webpack.prod.config.js",
+    "deploy": "gh-pages -d build"
   },
   "dependencies": {
     "3box": "^1.3.0",
@@ -34,6 +36,7 @@
     "babel-polyfill": "^6.26.0",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
+    "gh-pages": "^2.0.1",
     "react": "^16.7.0",
     "react-dom": "^16.7.0",
     "react-hot-loader": "^4.6.3",

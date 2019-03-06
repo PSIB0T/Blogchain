@@ -57,7 +57,7 @@ class TempSession extends React.Component {
     }
 
     async loadTagDb() {
-        let tagDb = await this.state.orbitdb.docs('tagdb')
+        let tagDb = await this.state.orbitdb.docs('/orbitdb/QmTTmfEZwHcD35Mojh468qp5iJS3Dv8QdYoGU3r6Xf3Fsv/tagdb')
         await tagDb.load()
         tagDb.events.on('replicated', () => {
             console.log("Replicated!")

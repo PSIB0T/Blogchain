@@ -29,7 +29,7 @@ class App extends React.Component {
     return (
       <div>
         <div className="page-content" />
-        <BrowserRouter>
+        <BrowserRouter basename={process.env.PUBLIC_URL}>
             <Layout>
               <Switch>
                 <Route 
