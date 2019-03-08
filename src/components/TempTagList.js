@@ -7,6 +7,7 @@ let ReactSpoiler = require('react-spoiler')
 let bayes = require('bayes')
 let jsonData = require('./../utils/test.json')
 let _ = require('lodash')
+let {NotificationContainer, NotificationManager} = require('react-notifications');
 
 
 class TempTagList extends React.Component {
@@ -52,8 +53,8 @@ class TempTagList extends React.Component {
     }
 
     componentWillReceiveProps(props) {
-        console.log("Inside receiveprops")
-        console.log(this.props)
+        // console.log("Inside receiveprops")
+        // console.log(this.props)
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -63,7 +64,7 @@ class TempTagList extends React.Component {
             exact: true,
             strict: false
         })
-        console.log(match)
+        // console.log(match)
         if (prevProps.posts !== this.props.posts || prevProps.match.params.tagId !== this.props.match.params.tagId) {
             this.loadPosts(this.props.match.params.tagId)
         } 
@@ -74,8 +75,29 @@ class TempTagList extends React.Component {
         this.setState({[name]: event.target.value});
     }
 
+    async insertTags(tags, post, isSpam) {
+        let randNo;
+        try {
+            for (let i = 0, p = Promise.resolve(); i < tags.length; i++) {
+                p = p.then(_ => {
+                    randNo = String(Date.now()) + String(Math.floor(Math.random() * 10000))
+                    return this.props.tagDb.put({
+                        _id: randNo,
+                        tag: tags[i].toLowerCase(),
+                        post,
+                        isSpam
+                    })
+                });
+            }
+            return Promise.resolve("Success")
+        } catch(err) {
+            return Promise.reject(err)
+        }
+
+    } 
+
     handlePostSubmit() {
-        let tag = this.state.tag,
+        let tags = this.state.tag,
             post = this.state.post,
             isSpam
         if (this.classifier.categorize(post.toLowerCase()) === "spam") {
@@ -83,14 +105,17 @@ class TempTagList extends React.Component {
         } else {
             isSpam = false
         }
-        console.log("Post is spam? " + isSpam)
-        this.props.tagDb.put({
-            _id: Date.now(),
-            tag,
-            post,
-            isSpam
-        }).then((res) => {
+        tags = tags.split(",").map(tag => {
+            return tag.trim()
+        })
+        console.log(tags)
+
+        // console.log("Post is spam? " + isSpam)
+        this.insertTags(tags, post, isSpam).then((res) => {
+            NotificationManager.success('Successfully submitted post!', 'Success');
             this.props.loadTags()
+        }).catch(err => {
+            console.log(err)
         })
     }
 
@@ -129,7 +154,7 @@ class TempTagList extends React.Component {
     }
 
     renderPosts() {
-        let tagList = Array.from(this.state.tagList)
+        let tagList = []
         return (
         <div>
             {tagList.map((tag) => {
@@ -165,7 +190,7 @@ class TempTagList extends React.Component {
             <div class="text-styles">
                 <Textfield
                     onChange={(event) => this.setState({tag: event.target.value})}
-                    label="Tag"
+                    label="Name of person(s) Separated by , (Eg:- Elliot, Whiterose)"
                     floatingLabel
                     value={this.state.tag}
                     style={{width: '500px'}}
@@ -193,6 +218,7 @@ class TempTagList extends React.Component {
     render() {
         return (
           <div>
+              <NotificationContainer />
               {this.loadComponent()}
           </div>  
         );

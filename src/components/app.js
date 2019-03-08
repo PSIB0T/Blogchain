@@ -1,7 +1,7 @@
 'use strict'
 
 const React = require('react')
-const { BrowserRouter, Route, Switch, Link } = require('react-router-dom')
+const { BrowserRouter, Route, Switch, HashRouter } = require('react-router-dom')
 const { Layout, Header, Navigation, Drawer, Content } = require('react-mdl');
 const MainProfile = require('./MainProfile')
 const TempSession = require('./TempSession')
@@ -25,11 +25,11 @@ class App extends React.Component {
   }
 
   render () {
-    console.log(window.location.pathname)
+    
     return (
       <div>
         <div className="page-content" />
-        <BrowserRouter basename={process.env.PUBLIC_URL}>
+        <HashRouter>
             <Layout>
               <Switch>
                 <Route 
@@ -50,7 +50,7 @@ class App extends React.Component {
             </Layout>
 
 
-        </BrowserRouter>
+        </HashRouter>
       </div>
 
     )

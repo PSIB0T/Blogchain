@@ -13,7 +13,6 @@ class Landing extends React.Component {
 
                     <div className="banner-text">
                         <h1>BlogChain</h1>
-                        <button href="#"><NavLink to={`/main`}>Sign In Using 3Box!!</NavLink></button>
                         <button href="#"><NavLink to={`/temp`}>Sign In Anonymously!!</NavLink></button>
 
                     </div>
