@@ -154,7 +154,7 @@ class TempTagList extends React.Component {
     }
 
     renderPosts() {
-        let tagList = []
+        let tagList = Array.from(this.state.tagList)
         return (
         <div>
             {tagList.map((tag) => {

@@ -6,6 +6,7 @@ const { Layout, Header, Navigation, Drawer, Content } = require('react-mdl');
 const MainProfile = require('./MainProfile')
 const TempSession = require('./TempSession')
 const Landing = require('./Landing')
+const Readme = require('./Readme')
 
 class App extends React.Component {
   constructor (props) {
@@ -39,6 +40,10 @@ class App extends React.Component {
                 <Route
                   path={`/temp`}
                   render={(props) => <TempSession {...props} setStatePromise={this.setStatePromise} />}
+                />
+                <Route 
+                  path="/readme"
+                  component={Readme}
                 />
                 <Route 
                   path="/"
