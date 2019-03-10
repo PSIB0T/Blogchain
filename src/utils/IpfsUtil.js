@@ -39,6 +39,7 @@ export function createIPFSobj (pubString) {
         let ipfs = new IPFS({
             repo,
             EXPERIMENTAL: {pubsub: true},
+            preload: {enabled: false},
             config: {
                 Addresses: {
                     Swarm: [

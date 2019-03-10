@@ -67,7 +67,6 @@ class TempSession extends React.Component {
     }
 
     async loadTags() {
-        console.log("Inside loadtags")
         let posts = this.state.tagDb.query(doc => true)
         let tags = Array.from(new Set(posts.map(post => post.tag)))
         tags = tags.map(tag => {

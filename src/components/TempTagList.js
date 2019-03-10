@@ -8,6 +8,7 @@ let bayes = require('bayes')
 let jsonData = require('./../utils/test.json')
 let _ = require('lodash')
 let {NotificationContainer, NotificationManager} = require('react-notifications');
+let Captcha = require('./captcha')
 
 
 class TempTagList extends React.Component {
@@ -21,11 +22,14 @@ class TempTagList extends React.Component {
             ipfs: null,
             tag: "",
             post: "",
+            captcha: "",
             tagList: new Set(),
             postList: []
         }
         this.setStatePromise = this.props.setStatePromise
         this.classifier = bayes.fromJson(JSON.stringify(jsonData))
+        this.captchaRef = React.createRef();
+        this.maxCharacters = 140;
     }
 
     loadPosts(tagFilter) {
@@ -52,23 +56,18 @@ class TempTagList extends React.Component {
         })
     }
 
-    componentWillReceiveProps(props) {
-        // console.log("Inside receiveprops")
-        // console.log(this.props)
-    }
-
     componentDidUpdate(prevProps, prevState) {
-
         const match = matchPath(this.props.history.location.pathname, {
             path: '/temp/tag/:tagId',
             exact: true,
             strict: false
         })
-        // console.log(match)
         if (prevProps.posts !== this.props.posts || prevProps.match.params.tagId !== this.props.match.params.tagId) {
             this.loadPosts(this.props.match.params.tagId)
+            
         } 
     }
+
 
     handleChange(event) {
         const name = event.target.name
@@ -97,26 +96,37 @@ class TempTagList extends React.Component {
     } 
 
     handlePostSubmit() {
-        let tags = this.state.tag,
-            post = this.state.post,
-            isSpam
-        if (this.classifier.categorize(post.toLowerCase()) === "spam") {
-            isSpam = true
-        } else {
-            isSpam = false
-        }
-        tags = tags.split(",").map(tag => {
-            return tag.trim()
-        })
-        console.log(tags)
-
-        // console.log("Post is spam? " + isSpam)
-        this.insertTags(tags, post, isSpam).then((res) => {
-            NotificationManager.success('Successfully submitted post!', 'Success');
-            this.props.loadTags()
-        }).catch(err => {
-            console.log(err)
-        })
+        // let tempVar = this.captchaRef.current.state.captcha
+        this.captchaRef.current.validateCaptcha()
+                        .then(() => {
+                            if (this.captchaRef.current.state.isValid === false) {
+                                return Promise.reject({status: "Error", message: "Invalid captcha"})
+                            } else {
+                                let tags = this.state.tag,
+                                    post = this.state.post,
+                                    isSpam
+                                if (tags.length === 0 || post.length === 0) {
+                                    return Promise.reject({status: "Error", message: "Post or tag field is empty"})
+                                }
+                                if (this.classifier.categorize(post.toLowerCase()) === "spam") {
+                                    isSpam = true
+                                } else {
+                                    isSpam = false
+                                }
+                                tags = tags.split(",").map(tag => {
+                                    return tag.trim()
+                                })
+                                return this.insertTags(tags, post. isSpam)
+                            }
+                        }).then(() => {
+                            NotificationManager.success('Successfully submitted post!', 'Success');
+                            return this.setStatePromise({tag: "", post: ""})
+                        }).then(() => {
+                            this.props.loadTags()
+                            this.captchaRef.current.generateCaptcha()
+                        }).catch(err => {
+                            NotificationManager.error(err.message, err.status);
+                        })
     }
 
     deletePost(event) {
@@ -189,20 +199,40 @@ class TempTagList extends React.Component {
         <div>
             <div class="text-styles">
                 <Textfield
-                    onChange={(event) => this.setState({tag: event.target.value})}
+                    onChange={(event) => {
+                        let tagListCommas = event.target.value.match(/,/gi)
+                        if (tagListCommas && tagListCommas.length > 4) {
+                            NotificationManager.warning("Only upto 5 people per post is allowed", "Warning")
+                            return 0
+                        }
+                        return this.setState({tag: event.target.value})}
+                    }
                     label="Name of person(s) Separated by , (Eg:- Elliot, Whiterose)"
                     floatingLabel
                     value={this.state.tag}
                     style={{width: '500px'}}
                 />
                 <Textfield
-                    onChange={(event) => this.setState({post: event.target.value})}
+                    onChange={(event) => {
+                        if (event.target.value.length > this.maxCharacters) {
+                            NotificationManager.warning(`Only ${this.maxCharacters} characters are allowed in a post`, "Warning")
+                            return 0
+                        }
+                        return this.setState({post: event.target.value})}
+                    }
                     label="Post"
                     floatingLabel
                     rows={3}
                     value={this.state.post}
                     style={{width: '500px'}}
                 />
+                <Captcha 
+                    isLoading = { this.state.isLoading }
+                    ref={this.captchaRef}
+                    setStatePromise={this.setStatePromise}
+                />
+                
+
                 <button onClick={this.handlePostSubmit.bind(this)}>Submit</button>
             </div>
 
@@ -220,6 +250,7 @@ class TempTagList extends React.Component {
           <div>
               <NotificationContainer />
               {this.loadComponent()}
+              
           </div>  
         );
     }
