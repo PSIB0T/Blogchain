@@ -116,7 +116,7 @@ class TempTagList extends React.Component {
                                 tags = tags.split(",").map(tag => {
                                     return tag.trim()
                                 })
-                                return this.insertTags(tags, post. isSpam)
+                                return this.insertTags(tags, post, isSpam)
                             }
                         }).then(() => {
                             NotificationManager.success('Successfully submitted post!', 'Success');
