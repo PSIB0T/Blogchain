@@ -24,6 +24,7 @@ class Keystore {
   async createKey(id) {
     let key;
     let {publicKey, privateKey} = await this._getFromBox();
+    console.log("gg from createkey")
     if (publicKey === null || publicKey === undefined || privateKey === null || privateKey === undefined) {
         console.log("Not found in 3box!")
         key = ec.genKeyPair()
@@ -47,7 +48,6 @@ class Keystore {
         publicKey: publicKey, 
         privateKey: privateKey 
     }))
-
     return key
   }
 

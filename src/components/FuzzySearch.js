@@ -143,6 +143,7 @@ class FuzzySearch extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
+    this.fuse = new Fuse(this.props.list, this.getOptions())
     this.fuse2 = new Fuse(this.props.list2, this.getOptions())
   }
 

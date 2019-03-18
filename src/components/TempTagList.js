@@ -23,6 +23,7 @@ class TempTagList extends React.Component {
             tag: "",
             post: "",
             captcha: "",
+            notAuthorized: false,
             tagList: new Set(),
             postList: []
         }
@@ -33,6 +34,14 @@ class TempTagList extends React.Component {
     }
 
     loadPosts(tagFilter) {
+        let addresses = ["0x04895fd3997d99ee472ef0617b6901eea067f8b3", "0xd8ae078a60d54d2da4d5d02439cd93a0494bba00",
+                        "0xbfbb7d674dbe988a5d10a0174a42eb051fc7548e", "0xeee57129b1cbb7169ba2f1b5b300efe1a8cf6391", "0x9cd900574d2861b0f1d5b0ea971eb6f43ea76399", "0x6a9049464bc700743b9dd5591ef574aa1266a01c"]
+        if (this.props.metamaskOff === true) {
+            return this.setStatePromise({isLoading: false})
+        }
+        if (!addresses.includes(this.props.address)) {
+            return this.setStatePromise({notAuthorized: true, isLoading: false})
+        }
         this.setState({isLoading: true})
         let posts = this.props.posts
         let tags = new Set(posts.map(post => post.tag))
@@ -56,15 +65,15 @@ class TempTagList extends React.Component {
         })
     }
 
+    componentDidMount() {
+        if (this.props.posts.length !== 0) {
+            this.loadPosts(this.props.match.params.tag)
+        }
+    }
+
     componentDidUpdate(prevProps, prevState) {
-        const match = matchPath(this.props.history.location.pathname, {
-            path: '/temp/tag/:tagId',
-            exact: true,
-            strict: false
-        })
-        if (prevProps.posts !== this.props.posts || prevProps.match.params.tagId !== this.props.match.params.tagId) {
-            this.loadPosts(this.props.match.params.tagId)
-            
+        if (prevProps.posts !== this.props.posts || prevProps.match.params.tag !== this.props.match.params.tag) {
+            this.loadPosts(this.props.match.params.tag)   
         } 
     }
 
@@ -194,7 +203,11 @@ class TempTagList extends React.Component {
             return (<p>Loading...</p>)
         } if (this.state.err) {
             return (<p>Error loading...</p>)
-        } 
+        } if (this.props.metamaskOff) {
+            return (<p>Please turn on metamask</p>)
+        } if (this.state.notAuthorized) {
+            return (<p>Not authorized to view posts</p>)
+        }
         return (
         <div>
             <div class="text-styles">
@@ -214,10 +227,10 @@ class TempTagList extends React.Component {
                 />
                 <Textfield
                     onChange={(event) => {
-                        if (event.target.value.length > this.maxCharacters) {
-                            NotificationManager.warning(`Only ${this.maxCharacters} characters are allowed in a post`, "Warning")
-                            return 0
-                        }
+                        // if (event.target.value.length > this.maxCharacters) {
+                        //     NotificationManager.warning(`Only ${this.maxCharacters} characters are allowed in a post`, "Warning")
+                        //     return 0
+                        // }
                         return this.setState({post: event.target.value})}
                     }
                     label="Post"

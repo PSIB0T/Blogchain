@@ -4,11 +4,10 @@ const React = require('react')
 const OrbitDB = require('orbit-db');
 const Box = require('3box');
 const path = require('path')
-const { BrowserRouter, Route, Switch } = require('react-router-dom')
+const { BrowserRouter, Route, Switch, Link } = require('react-router-dom')
 const styled = require('styled-components')
-
+const { Navigation, Header } = require('react-mdl');
 const SetNo = require('./SetNo')
-const Navigation = require('./Navigation')
 const Profile = require('./Profile')
 const TagList = require('./TagList')
 const KeyStore = require('./../utils/Keystore');
@@ -16,11 +15,12 @@ const SearchByUsername = require('./SearchByUsername')
 const SearchByTag = require('./SearchByTag')
 const ProfFriend = require('./ProfFriend');
 let {createIPFSobj} = require('./../utils/IpfsUtil')
-const SideNav = require('./Sidenav')
+const TempTagList = require('./TempTagList')
+const FuzzySearch = require('./FuzzySearch')
 
 
 const DivComponent = styled.default('div')`
-                            margin:10px 0px 0px 258px;`
+                            margin: 0px;`
 
 class MainProfile extends React.Component {
   constructor (props) {
@@ -36,12 +36,16 @@ class MainProfile extends React.Component {
       receiveurl: "",
       ipfs: null,
       orbitdb: null,
+      tagDb: null,
       tagDbGlobal: null,
+      tagList: [],
+      posts: [],
       db: null,
       value: null,
       globalDB: null,
       searchField: ""
     }
+    this.list = []
     console.log("Mainprops")
     console.log(props)
     this.setStatePromise = props.setStatePromise
@@ -90,12 +94,32 @@ class MainProfile extends React.Component {
 
   async loadTagDb() {
     let tagDbGlobal = await this.state.orbitdb.docs('/orbitdb/QmNwa1jH1F9AmX8P2s7yywp2SBJdrsXwTM4VVyevR2tRrg/tagdbGlobal')
-    await tagDbGlobal.load()
-    tagDbGlobal.events.on('replicated', () => {
-        console.log("Replicated!")
+    let tagDb = await this.state.orbitdb.docs('/orbitdb/QmPC79YHyyJM3DcZVyc33GRC2i9ohQD6Nbv9sDaKXMo77T/tagdb2')
+    await tagDb.load()
+    tagDb.events.on('replicated', () => {
+      console.log("Replicated tagdb!")
+      this.loadTags()
     })
-    return this.setStatePromise({tagDbGlobal})
+    return this.setStatePromise({tagDbGlobal, tagDb})
+                .then(() => {
+                  return this.loadTags()
+                })
   }
+
+  async loadTags() {
+    let posts = this.state.tagDb.query(doc => true)
+    let tags = Array.from(new Set(posts.map(post => post.tag)))
+    console.log(posts)
+    tags = tags.map(tag => {
+        return {
+            title: tag
+        }
+    })
+    // console.log(tags)
+    return this.setStatePromise({tagList: tags, posts})
+  }
+
+
 
   async getProfile() {
     let self = this;
@@ -150,13 +174,9 @@ class MainProfile extends React.Component {
               let id = await self.state.ipfs.id()
               let keystore = KeyStore().create(null, this.state.box)
               let orbitdb = new OrbitDB(self.state.ipfs,null, {keystore})
-              let db = await orbitdb.keyvalue('myfirstdb')
-              console.log("Orbit db public key is ")
-              console.log(orbitdb.key.getPublic('hex'))
-              await db.load();
-              let value = db.get("value")
-              console.log(db.address.toString())
-              self.setStatePromise({orbitdb, db, value, id: id.id})
+              // console.log("Orbit db public key is ")
+              // console.log(orbitdb.key.getPublic('hex'))
+              self.setStatePromise({orbitdb,id: id.id})
                   .then(() => {
                     resolve("Success")
                   })
@@ -195,48 +215,78 @@ class MainProfile extends React.Component {
     console.log(databasePeers)
     this.setState({value: db2.get("value")})
   }
-  
+  action(event) {
+    let match = this.props.match
+    // console.log(event)
+    this.props.history.push("/main/tag/" + event.title)
+  } 
 
   render () {
     let match = this.props.match
     return (
-      <BrowserRouter>
         <DivComponent>
           {this.renderAuthErr()}
-          {/* <Navigation /> */}
-          {/* <Search /> */}
-          <SideNav match={match}/>
+          <Header className="header-color" title={<Link style={{textDecoration: 'none', color: 'white'}} to={`${match.path}`}>Home</Link>} scroll>
+            <Navigation>
+            <FuzzySearch
+                list2={this.list}
+                list={this.state.tagList}
+                keys={['title']}
+                width={430}
+                onSelect={this.action.bind(this)}
+              />  
+              <Link to="/main/profile" className="navLink">Profile</Link>
+              <Link to="/main/search" className="navLink">Search Profile</Link>
+              <Link to="/main/tags" className="navLink">PostsByTag</Link>
+            </Navigation>
+          </Header>
+
           <Switch>
             <Route 
-              path={`${match.path}/profile/:nick`}
+              exact path={`/main/profile/:nick`}
               render={(props) => <ProfFriend {...props} 
               orbitdb={this.state.orbitdb}
               globalDB={this.state.globalDB}
               />}
             />
             <Route 
-              path={`${match.path}/tag/:tag`}
-              render={(props) => <TagList {...props} 
+              exact path={`/main/tag/:tag`}
+              render={(props) => <TempTagList {...props} 
+              setStatePromise={this.setStatePromise} 
+              tagDb={this.state.tagDb}
               orbitdb={this.state.orbitdb}
-              globalDB={this.state.globalDB}
-              tagDbGlobal={this.state.tagDbGlobal}
-              setStatePromise={this.setStatePromise}
+              posts={this.state.posts}
+              loadTags={this.loadTags.bind(this)}
+              metamaskOff={this.state.metamaskOff}
+              address={this.state.address}
               />}
             />
+            <Route 
+                exact path={`/main/tags`}
+                render={(props) => <TempTagList {...props} 
+                setStatePromise={this.setStatePromise} 
+                tagDb={this.state.tagDb}
+                orbitdb={this.state.orbitdb}
+                posts={this.state.posts}
+                loadTags={this.loadTags.bind(this)}
+                metamaskOff={this.state.metamaskOff}
+                address={this.state.address}
+                />}
+            />
             <Route
-              path={`${match.path}/search`}
+              exact path={`/main/search`}
               render={(props) => <SearchByUsername {...props}
                 match2={this.props.match}
               />}
             />
             <Route
-              path={`${match.path}/searchbytag`}
+              exact path={`/main/searchbytag`}
               render={(props) => <SearchByTag {...props}
                 match2={this.props.match}
               />}
             />
             <Route 
-              path={`${match.path}/profile`}
+              exact path={`/main/profile`}
               render={(props) => 
               <Profile
                 {...props}
@@ -248,23 +298,18 @@ class MainProfile extends React.Component {
                 />}
             />
             <Route 
-              path={`${match.path}`}
+              exact path={`/main/`}
               render={(props) => 
                 <SetNo id={this.state.id} 
-                value={this.state.value}
-                handleChange={this.handleChange.bind(this)} 
-                handleNoSubmit={this.handleNoSubmit.bind(this)}
-                receiveurl={this.state.receiveurl}
-                handleUrlSubmit={this.handleUrlSubmit.bind(this)}
-              />
+                tagDb={this.state.tagDb}
+                metamaskOff={this.state.metamaskOff}
+              />  
             }
             />
  
 
           </Switch>
         </DivComponent>
-
-      </BrowserRouter>
     )
   }
 }

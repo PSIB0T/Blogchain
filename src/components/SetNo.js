@@ -4,6 +4,9 @@ class SetNo extends React.Component {
 
     constructor(props) {
         super(props)
+        this.state = {
+            isLoading: true
+        }
     }
 
     handleChange(e) {
@@ -17,23 +20,35 @@ class SetNo extends React.Component {
         this.props.handleUrlSubmit(e);
     }
 
+    componentDidMount() {
+        if (this.props.tagDb !== null) {
+            this.setState({isLoading: false})
+        }
+    }
+
+    componentWillReceiveProps(nextProps) {
+        if (nextProps.tagDb !== null && this.props.tagDb !== nextProps.tagDb) {
+            this.setState({isLoading: false})
+        } 
+    }
+
+    renderComponent() {
+        if (this.props.metamaskOff) {
+            return (<h1>Please sign into/download metamask and refresh the browser</h1>)
+        }
+        if (this.state.isLoading) {
+            return (<h1>Loading...</h1>)
+        } 
+        return (<div>
+            <h1>Welcome!</h1>
+            <p>Your IPFS ID is <strong>{this.props.id}</strong></p>
+        </div>)
+    }
+
     render() {
         return (
         <div style={{ textAlign: 'center' }}>
-            <h1>Everything is working!</h1>
-            <p>Your ID is <strong>{this.props.id}</strong></p>
-            <hr />
-            <p>Value of value is {this.props.value}</p>
-            <div>
-              <label for="setno">Set number</label>
-              <input name="setno" id="setno" value={this.props.setno} onChange={this.handleChange.bind(this)}/>          
-              <button onClick={this.handleNoSubmit.bind(this)}>Submit</button>
-            </div>
-            <div>
-              <label for="receiveurl">Enter receiver url</label>
-              <input name="receiveurl" id="receiveurl" value={this.props.receiveurl} onChange={this.handleChange.bind(this)}/>
-              <button onClick={this.handleUrlSubmit.bind(this)}>Submit</button>
-            </div>
+            {this.renderComponent()}
           </div>
         );
     }

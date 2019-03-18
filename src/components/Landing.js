@@ -13,8 +13,8 @@ class Landing extends React.Component {
 
                     <div className="banner-text">
                         <h1>BlogChain</h1>
-                        <button href="#"><NavLink to={`/temp`}>Sign In Anonymously!!</NavLink></button>
-                        <button href="#"><NavLink to={`/readme`}>View docs</NavLink></button>
+                        <NavLink to={`/main`}><button>Sign In using metamask</button></NavLink>
+                        <NavLink to={`/temp`}><button>Sign In Anonymously!!</button></NavLink>
 
                     </div>
                     
