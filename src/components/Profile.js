@@ -3,12 +3,15 @@ const React = require('react')
 const styled = require('styled-components')
 const { Grid, Cell,Chip,ChipContact,Badge, Textfield,FABButton,Icon,Card,CardText,CardTitle,CardMenu,IconButton, Button } = require('react-mdl');
 const { Link } = require('react-router-dom');
+const imageType = require('image-type');
 const _ = require('lodash')
+const fileReaderPullStream = require('pull-file-reader')
 
 class Profile extends React.Component {
     constructor(props) {
         super(props)
-
+        this.inputElement = null
+        this.imageElement = null
         this.state = {
             loading: true,
             noAccount: null,
@@ -159,7 +162,7 @@ class Profile extends React.Component {
             console.log("Inside loadtags")
             let tagString = tags.join(", ")
             console.log(tagString)
-            this.setStatePromise(({tags, tagString}))
+            return this.setStatePromise(({tags, tagString}))
         }
     }
 
@@ -288,7 +291,9 @@ class Profile extends React.Component {
                             return this.fetchPosts()
                         })
                         .then(() => {
-                            this.loadTags()
+                            return this.loadTags()
+                        }).then(() => {
+                            this.loadImage(this.state.profDb.get('imageHash'))
                         }).catch(err => {
                             console.log(err)
                         })
@@ -406,6 +411,49 @@ class Profile extends React.Component {
         )
     }
 
+    clickInputElement() {
+        this.inputElement.click()
+    }
+
+    captureFile(event){
+        event.preventDefault()
+        console.log("Captured file!")
+        const file = event.target.files[0]
+        this.saveToIpfs(file)
+    }
+
+    saveToIpfs (file) {
+        let ipfsId
+        const fileStream = fileReaderPullStream(file)
+        this.props.ipfs.files.add(fileStream, { progress: (prog) => console.log(`received: ${prog}`) })
+          .then((response) => {
+            console.log(response)
+            ipfsId = response[0].hash
+            console.log(ipfsId)
+            this.setStatePromise({added_file_hash: ipfsId})
+          }).then(() => {
+              return this.state.profDb.set('imageHash', this.state.added_file_hash)
+          }).then(() => {
+              return this.loadImage(this.state.added_file_hash)
+          }).catch((err) => {
+            console.error(err)
+          })
+    }
+
+    loadImage(hash) {
+        console.log("Hash is " + hash)
+        this.props.ipfs.files.cat(`/ipfs/${hash}`)
+                        .then(file => {
+                            let arrayBufferView = new Uint8Array(file);
+                            var blob = new Blob( [ arrayBufferView ], { type:  imageType(file).mime} );
+                            var urlCreator = window.URL || window.webkitURL;
+                            var imageUrl = urlCreator.createObjectURL( blob );
+                            this.imageElement.src = imageUrl
+                            console.log(imageType(file))
+                            // console.log(file.toString('utf8'))
+                        })
+    }
+
     renderProfile() {
         if (this.state.loading === true ) {
             return (<p>Loading...</p>)
@@ -428,14 +476,18 @@ class Profile extends React.Component {
                     <img
                       src="https://www.shareicon.net/download/2015/09/18/103157_man_512x512.png"
                       alt="avatar"
+                      ref={input => this.imageElement = input}
                       style={{height: '200px'}}
                        />
       
                   </div>
              
       
-                <FABButton colored ripple>
-                <Icon name="add" />
+                <FABButton colored ripple onClick={this.clickInputElement.bind(this)}>
+                    <Icon name="add" />
+                    <input type="file" id="upload" style={{display: "none"}} ref={input => this.inputElement = input}
+                        onChange={this.captureFile.bind(this)}
+                    />
                 </FABButton>
                   <h2 style={{paddingTop: '0em'}}>{this.state.fname}</h2>
                   <h4 style={{color: 'grey'}}>Programmer</h4>

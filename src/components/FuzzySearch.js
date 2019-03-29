@@ -184,6 +184,12 @@ class FuzzySearch extends React.Component {
     }
   }
 
+  search(e) {
+    if (e.keyCode === 13) {
+      this.props.onSelect(e.target.value);
+    }
+  }
+
   handleMouseClick(clickedIndex) {
     const { results } = this.state;
 
@@ -209,6 +215,7 @@ class FuzzySearch extends React.Component {
             onChange={this.handleChange}
             placeholder={placeholder}
             autoFocus={autoFocus}
+            onKeyUp={this.search.bind(this)}
             value={this.state.selectedValue && this.state.selectedValue.title}
           />
         </div>

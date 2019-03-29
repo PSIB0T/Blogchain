@@ -118,7 +118,6 @@ class MainProfile extends React.Component {
   }
 
 
-
   async getProfile() {
     let self = this;
     let address, ethereumProvider;
@@ -215,8 +214,13 @@ class MainProfile extends React.Component {
   }
   action(event) {
     let match = this.props.match
+    console.log("Inside action")
+    if (typeof  event === "string") {
+      this.props.history.push("/main/profile/" + event)
+    } else {
+      this.props.history.push("/main/tag/" + event.title)
+    }
     // console.log(event)
-    this.props.history.push("/main/tag/" + event.title)
   } 
 
   render () {
@@ -234,7 +238,6 @@ class MainProfile extends React.Component {
                 onSelect={this.action.bind(this)}
               />  
               <Link to="/main/profile" className="navLink">Profile</Link>
-              <Link to="/main/search" className="navLink">Search Profile</Link>
               <Link to="/main/tags" className="navLink">PostsByTag</Link>
             </Navigation>
           </Header>
@@ -300,6 +303,7 @@ class MainProfile extends React.Component {
                 globalDB={this.state.globalDB}
                 match2={this.props.match}
                 tagDbGlobal={this.state.tagDbGlobal}
+                ipfs={this.state.ipfs}
                 />}
             />
             <Route 
