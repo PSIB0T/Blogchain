@@ -46,8 +46,6 @@ class MainProfile extends React.Component {
       searchField: ""
     }
     this.list = []
-    console.log("Mainprops")
-    console.log(props)
     this.setStatePromise = props.setStatePromise
   }
 
@@ -95,7 +93,7 @@ class MainProfile extends React.Component {
   async loadTagDb() {
     let tagDbGlobal = await this.state.orbitdb.docs('/orbitdb/QmNwa1jH1F9AmX8P2s7yywp2SBJdrsXwTM4VVyevR2tRrg/tagdbGlobal')
     let tagDb = await this.state.orbitdb.docs('/orbitdb/QmPC79YHyyJM3DcZVyc33GRC2i9ohQD6Nbv9sDaKXMo77T/tagdb2')
-    await tagDb.load()
+    await tagDb.load(5)
     tagDb.events.on('replicated', () => {
       console.log("Replicated tagdb!")
       this.loadTags()
@@ -109,12 +107,12 @@ class MainProfile extends React.Component {
   async loadTags() {
     let posts = this.state.tagDb.query(doc => true)
     let tags = Array.from(new Set(posts.map(post => post.tag)))
-    console.log(posts)
     tags = tags.map(tag => {
         return {
             title: tag
         }
     })
+    console.log(posts)
     // console.log(tags)
     return this.setStatePromise({tagList: tags, posts})
   }
@@ -229,8 +227,8 @@ class MainProfile extends React.Component {
           <Header className="header-color" title={<Link style={{textDecoration: 'none', color: 'white'}} to={`${match.path}`}>Home</Link>} scroll>
             <Navigation>
             <FuzzySearch
-                list2={this.list}
-                list={this.state.tagList}
+                list2={this.state.tagList}
+                list={this.list}
                 keys={['title']}
                 width={430}
                 onSelect={this.action.bind(this)}
@@ -244,11 +242,17 @@ class MainProfile extends React.Component {
           <Switch>
             <Route 
               exact path={`/main/profile/:nick`}
-              render={(props) => <ProfFriend {...props} 
-              orbitdb={this.state.orbitdb}
-              globalDB={this.state.globalDB}
-              />}
-            />
+              render={(props) => 
+              <Profile
+                {...props}
+                orbitdb={this.state.orbitdb}
+                isFriend={true}
+                box={this.state.box}
+                globalDB={this.state.globalDB}
+                match2={this.props.match}
+                tagDbGlobal={this.state.tagDbGlobal}
+                />}
+              />
             <Route 
               exact path={`/main/tag/:tag`}
               render={(props) => <TempTagList {...props} 
@@ -292,6 +296,7 @@ class MainProfile extends React.Component {
                 {...props}
                 orbitdb={this.state.orbitdb}
                 box={this.state.box}
+                isFriend={false}
                 globalDB={this.state.globalDB}
                 match2={this.props.match}
                 tagDbGlobal={this.state.tagDbGlobal}
@@ -302,7 +307,11 @@ class MainProfile extends React.Component {
               render={(props) => 
                 <SetNo id={this.state.id} 
                 tagDb={this.state.tagDb}
+                globalDB={this.state.globalDB}
+                orbitdb={this.state.orbitdb}
+                box={this.state.box}
                 metamaskOff={this.state.metamaskOff}
+                setStatePromise={this.setStatePromise} 
               />  
             }
             />

@@ -1,69 +1,9 @@
 const React = require('react')
 
 const styled = require('styled-components')
-
+const { Grid, Cell,Chip,ChipContact,Badge, Textfield,FABButton,Icon,Card,CardText,CardTitle,CardMenu,IconButton, Button } = require('react-mdl');
+const { Link } = require('react-router-dom');
 const _ = require('lodash')
-
-const InputComponent = styled.default('input')`
-                            width: 50%;
-                            height:100px;
-                            padding: 12px 20px;
-                            font-size:20px;
-                            box-sizing: border-box;
-                            border: 2px solid #ccc;
-                            border-radius: 4px;
-                            background-color: #f8f8f8;
-                        `
-const ButtonComponent = styled.default('button')`
-                            background-color: rgb(27, 165, 207); /* Green */
-                            border: none;
-                            color: white;
-                            padding: 20px;
-                            text-align: center;
-                            text-decoration: none;
-                            display: inline-block;
-                            font-size: 20px;
-                            margin: 10px;
-                            cursor: pointer;
-
-                        `
-const PostsComponent = styled.default('div')`
-                            font-size: 20px;
-                            resize: none;
-                        `
-const ParaComponent = styled.default('p')`
-                            margin-top: 10px;
-                            margin-bottom: 10px;
-                            padding: 15px;
-                            box-shadow: 1px 2px 8px #888888;
-
-                        `
-const DescComponent = styled.default('div')`
-                            width: 50%;
-                            height:auto;
-                            padding: 12px 20px;
-                            font-size:20px;
-                            margin: 8px 0;
-                            box-sizing: border-box;
-                            border: 2px solid #ccc;
-                            border-radius: 4px;
-                            background-color: #f8f8f8;
-                        `
-const UlComponent = styled.default('ul')`
-                            margin: 0;
-                            padding: 0;
-                            display: flex;
-                            flex-direction: column;
-                        `
-const LiComponent = styled.default('li')`
-                            margin: 5px;
-                            list-style-type: none;
-                            display: flex;
-                            justify-content: space-around
-                        `
-const InnerDiv = styled.default('div')`
-                            min-width: 100px;
-                        `
 
 class Profile extends React.Component {
     constructor(props) {
@@ -74,17 +14,19 @@ class Profile extends React.Component {
             noAccount: null,
             globalDB: null,
             nick: "",
+            dob: "",
+            fname: "",
+            email: "",
             post: "",
             profDb: null,
             postDb: null,
-            dob: null,
             tagString: "",
             tags: [],
             postTagList: "",
             posts: [],
             opProps: [
                 {
-                    name: 'Name',
+                    name: 'Nickname',
                     prop: 'nick',
                     show: true
                 },
@@ -92,6 +34,15 @@ class Profile extends React.Component {
                     name: 'Born',
                     prop: 'dob',
                     show: true
+                },
+                {
+                    name: 'Email id',
+                    prop: 'email',
+                    show: true
+                },{
+                    name: 'Fullname',
+                    prop: 'fname',
+                    show: false
                 }
             ]
         }
@@ -212,20 +163,6 @@ class Profile extends React.Component {
         }
     }
 
-    async handlePostSubmit(event) {
-        let post = this.state.post,
-            postDb = this.state.postDb;
-            tags = this.state.postTagList.split(",").map(tag => {
-                return tag.trim()
-            })
-        
-        postDb.put({_id: Date.now(), post, tags})
-                .then((res) => {
-                    console.log("Successfully inserted posts")
-                    this.fetchPosts()
-                })  
-    }
-
     async fetchPosts() {
         let postDb
         postDb = this.state.postDb;
@@ -247,52 +184,137 @@ class Profile extends React.Component {
                                 noAccount: true
                             })
                         } else {
-                            let profDb = await this.props.orbitdb.keyvalue(dbAddress)
-                            await profDb.load()
-                            return this.setStatePromise({
-                                loading: false,
-                                noAccount: false,
-                                profDb,
-                                nick: profDb.get('nick'),
-                                dob: profDb.get('dob')
-                            })
+                            return this.loadProfDb(dbAddress)
                         }
                     }).then(async () => {
                         if (this.state.noAccount === true)
                             return Promise.reject({code: 404, error: "No account"})
-                        let postDbUrl = this.state.profDb.get('postDBUrl')
-                        if (postDbUrl === undefined) {
-                            postDb = await this.props.orbitdb.docs(this.state.nick + "-posts", {write: ['*']})
-                            await this.state.profDb.set('postDBUrl', postDb.address.toString())
-                        } else {
-                            postDb = await this.props.orbitdb.docs(postDbUrl)
-                            await postDb.load()
-                        }
-                        this.setStatePromise({postDb})
-                    }).then(() => {
-                        return this.fetchPosts()
+                        return this.loadPostDb()
                     })
     }
 
-    async loadGlobalDb(props) {
-        return this.loadFromBox(props)
-                    .then(() => {
-                        this.loadTags()
-                    }).catch(err => {
-                        console.log(err)
+    deletePost(event) {
+        let id = event.target.id
+        if (id !== null && id !== undefined && id !== '') {
+            this.state.postDb.del(id)
+                      .then(() => {
+                          this.fetchPosts()
+                      })
+        }
+    }
+
+    handleUpvote(event) {
+        let id = event.target.id;
+        let address = this.state.profDb.address.toString();
+        if (id !== null && id !== undefined && id !== '') {
+            post = this.state.postDb.get(id)[0];
+            post.upvotes = new Set(post.upvotes) || new Set([])
+            post.downvotes = new Set(post.downvotes) || new Set([])
+            if (post.upvotes.has(address)){
+                post.upvotes.delete(address)
+            } else {
+                post.upvotes.add(address)
+            }
+            post.downvotes.delete(address)
+            post.downvotes = Array.from(post.downvotes)
+            post.upvotes = Array.from(post.upvotes)
+            console.log(post)
+            postDb.put(post)
+                    .then(res => {
+                        console.log("Upvoted successfully")
+                        this.fetchPosts()
                     })
+        }
+    }
+    handleDownvote(event) {
+        let id = event.target.id;
+        let address = this.state.profDb.address.toString();
+        if (id !== null && id !== undefined && id !== '') {
+            post = this.state.postDb.get(id)[0];
+            post.upvotes = new Set(post.upvotes) || new Set([])
+            post.downvotes = new Set(post.downvotes) || new Set([])
+            if (post.downvotes.has(address)){
+                post.downvotes.delete(address)
+            } else {
+                post.downvotes.add(address)
+            }
+            post.upvotes.delete(address)
+            post.downvotes = Array.from(post.downvotes)
+            post.upvotes = Array.from(post.upvotes)
+            console.log(post)
+            postDb.put(post)
+                    .then(res => {
+                        console.log("Downvoted successfully")
+                        this.fetchPosts()
+                    })
+        }
+    }
+
+    async loadProfDb(dbAddress) {
+        let profDb = await this.props.orbitdb.keyvalue(dbAddress)
+        await profDb.load()
+        let profObjects = this.state.opProps.reduce((prevVal, currentVal) => {
+            return {
+                ...prevVal,
+                [currentVal.prop]: profDb.get(currentVal.prop) 
+            }
+        }, {})
+        return this.setStatePromise({
+            loading: false,
+            noAccount: false,
+            profDb,
+            ...profObjects
+        })       
+    }
+
+    async loadPostDb() {
+        let postDbUrl = this.state.profDb.get('postDBUrl')
+        if (postDbUrl === undefined) {
+            postDb = await this.props.orbitdb.docs(this.state.nick + "-posts", {write: ['*']})
+            await this.state.profDb.set('postDBUrl', postDb.address.toString())
+        } else {
+            postDb = await this.props.orbitdb.docs(postDbUrl)
+            await postDb.load()
+        }
+        return this.setStatePromise({postDb})
+    }
+
+    async loadGlobalDb(props) {
+        let nick = props.match.params.nick
+        this.setState({loading: true})
+        if (nick === undefined) {
+            return this.loadFromBox(props)
+                        .then(() => {
+                            return this.fetchPosts()
+                        })
+                        .then(() => {
+                            this.loadTags()
+                        }).catch(err => {
+                            console.log(err)
+                        })
+        } else {
+            let dbAddress = this.props.globalDB.get(nick)
+            return this.loadProfDb(dbAddress)
+                        .then(() => {
+                            return this.loadPostDb()
+                        }).then(() => {
+                            return this.fetchPosts()
+                        })
+        }
+
     }
 
     async editProp(prop) {
         let oldVal = this.state.profDb.get(prop)
         console.log(oldVal)
+        if (oldVal === this.state[prop]) {
+            return Promise.resolve()
+        }
         return this.setStatePromise({loading: true})
                     .then(() => {
                         return this.state.profDb.set(prop, this.state[prop])
                     }).then(() => {
                         console.log("Edit made successfully")
-                        
-                        
                     }).catch((err) => {
                         console.log(err)
                         return this.setStatePromise({loading: false})
@@ -306,28 +328,82 @@ class Profile extends React.Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        if (nextProps.tagDbGlobal !== null && this.props.tagDbGlobal !== nextProps.tagDbGlobal) {
+        if ((nextProps.tagDbGlobal !== null && this.props.tagDbGlobal !== nextProps.tagDbGlobal) || nextProps.isFriend !== this.props.isFriend) {
             console.log("Inside willreceiveprops")
             this.loadGlobalDb(nextProps)
         }
     }
 
     handleEdit(event) {
-        const propName = event.target.id;
-        let opProps = this.state.opProps.reduce((accumulator, currentProp) => {
-            if(currentProp.prop === propName) {
-                if (currentProp.show === false) {
-                    this.editProp(propName)
-                }
-                currentProp.show = currentProp.show === true?false:true;
-            }
-            accumulator.push(currentProp)
-            return accumulator;
-        }, [])
-        this.setState({
-            opProps 
+        this.setState({loading: true})
+        this.state.opProps.map(async (opProp) => {
+            await this.editProp(opProp.prop)
         })
+        this.setState({loading: false})
         // propFind.show = false;   
+    }
+
+    renderPosts() {
+        return (
+        <div>
+            {
+                this.state.posts.map((post) => {
+                    return (
+                        <div>
+                            <Card shadow={5} style={{width:700,marginLeft:20,marginTop:50}}>
+                                <CardTitle style={{color: 'black', height: '100px'}} >1000 kg bombs</CardTitle>
+                                <CardText>
+                                    {post.post}
+                                </CardText>
+                    
+                                <CardMenu style={{color: 'black'}}>
+                                <IconButton name="share" />
+                                </CardMenu>
+                            </Card>  
+                            <IconButton style={{marginLeft:20,marginTop:20,marginBottom:20 }} id={post._id} onClick={this.handleUpvote.bind(this)} name="thumb_up" />
+                            {post.upvotes ? post.upvotes.length : 0}
+                            <IconButton style={{marginLeft:10,marginTop:20,marginBottom:20 }} id={post._id} onClick={this.handleDownvote.bind(this)} name="thumb_down" />
+                            {post.downvotes ? post.downvotes.length : 0}      
+                            <IconButton style={{marginLeft: 30,marginTop:20,marginBottom:20 }} id={post._id} name="delete" onClick={this.deletePost.bind(this)}/>
+                            <div>
+                                <Textfield 
+                                onChange={() => {}}
+                                label="Comment..!!"
+                                floatingLabel
+                                style={{width: '800px',marginLeft:20}}
+                                />
+                            </div>
+                        </div>
+                    )
+                })
+            }
+        </div>
+
+        )
+    }
+
+    renderEditProfile() {
+        if (this.props.isFriend === true)
+            return 
+        return (
+            <div>
+                  <h2>Edit Your Profile </h2>
+                  {this.state.opProps.map(opProp => {
+                      return (<div>
+                                <Textfield
+                                onChange={this.handleChange.bind(this)}
+                                label={"Edit Your " + opProp.name}
+                                floatingLabel
+                                name={opProp.prop}
+                                style={{width: '200px'}}
+                                value={this.state[opProp.prop]}
+                                />
+                            </div>)
+                  })}
+                  <Button raised colored onClick={this.handleEdit.bind(this)}>Submit</Button>
+                  <hr style={{borderTop: '3px solid #e22947'}} />
+            </div>
+        )
     }
 
     renderProfile() {
@@ -341,43 +417,100 @@ class Profile extends React.Component {
                     <button onClick={this.handleNickSubmit.bind(this)}>Submit</button>
                 </div>
             )
-        } 
-        return (
-                <div>
-                    <DescComponent>
-                        <UlComponent>
-                            {this.state.opProps.map((opProp) => {
-                                return (
-                                    <LiComponent><InnerDiv>{opProp.name}</InnerDiv>
-                                        {opProp.show?<InnerDiv>{this.state[opProp.prop]}</InnerDiv>:<InnerDiv><input name={opProp.prop  } value={this.state[opProp.prop]} onChange={this.handleChange.bind(this)}/></InnerDiv>}
-                                        <div><button id={opProp.prop} onClick={this.handleEdit.bind(this)}>Edit</button></div>
-                                    </LiComponent>
-                                );
-                            })}
-                        </UlComponent>
-                    </DescComponent>
-                    <InputComponent name="tagString" id="tagString" value={this.state.tagString} onChange={this.handleChange.bind(this)} />
-                    <ButtonComponent onClick={this.handleTagSubmit.bind(this)}>Submit Tags</ButtonComponent>
-                    <br />
-                    <InputComponent name="postTagList" id="postTagList" value={this.state.postTagList} onChange={this.handleChange.bind(this)} />
-                    <br />
-                    <InputComponent name="post" id="post" value={this.state.post} onChange={this.handleChange.bind(this)} />
-                    <ButtonComponent onClick={this.handlePostSubmit.bind(this)}>Submit</ButtonComponent>
+        }
+        return(
+            <div>
+              
+              <Grid>
+                <Cell col={4}>
+                  <div style={{textAlign: 'center'}}>
+                  
+                    <img
+                      src="https://www.shareicon.net/download/2015/09/18/103157_man_512x512.png"
+                      alt="avatar"
+                      style={{height: '200px'}}
+                       />
+      
+                  </div>
+             
+      
+                <FABButton colored ripple>
+                <Icon name="add" />
+                </FABButton>
+                  <h2 style={{paddingTop: '0em'}}>{this.state.fname}</h2>
+                  <h4 style={{color: 'grey'}}>Programmer</h4>
+                  <hr style={{borderTop: '3px solid #833fb2', width: '50%'}}/>
+                  <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.</p>
+                  <hr style={{borderTop: '3px solid #833fb2', width: '50%'}}/>
+                  {
+                      this.state.opProps.map(opProp => {
+                          if (opProp.show) {
+                            return (
+                                <div>
+                                    <h5>{opProp.name}</h5>
+                                    <p>{this.state[opProp.prop]}</p>
+                                </div>
+                            )
+                          }
 
-                    <ButtonComponent onClick={this.deleteAccount.bind(this)}>Delete profile</ButtonComponent>
-                    <br />
-                    <PostsComponent>
-                    {
-                        this.state.posts.map(post => {
-                            return (<div>
-                                <ParaComponent>{post.post}</ParaComponent>
-                                <button id={post._id} onClick={this.handlePostDelete.bind(this)}>Delete</button>
-                            </div>)
-                        })
-                    }
-                    </PostsComponent>
-                </div>
-                )
+                      })
+                  }
+                  <hr style={{borderTop: '3px solid #833fb2', width: '50%'}}/>
+                <Chip>
+                <ChipContact className="mdl-color--teal mdl-color-text--white">5</ChipContact>
+                <Link to="/follower">Followers</Link>
+                
+                </Chip>
+                
+                </Cell>
+                <Cell className="resume-right-col" col={8}>
+                <div></div>
+                  {this.renderEditProfile()}
+                  <div>
+
+                  </div>
+                {this.renderPosts()}
+      
+                </Cell>
+              </Grid>
+            </div>
+          )
+        // return (
+        //         <div>
+        //             <DescComponent>
+        //                 <UlComponent>
+        //                     {this.state.opProps.map((opProp) => {
+        //                         return (
+        //                             <LiComponent><InnerDiv>{opProp.name}</InnerDiv>
+        //                                 {opProp.show?<InnerDiv>{this.state[opProp.prop]}</InnerDiv>:<InnerDiv><input name={opProp.prop  } value={this.state[opProp.prop]} onChange={this.handleChange.bind(this)}/></InnerDiv>}
+        //                                 <div><button id={opProp.prop} onClick={this.handleEdit.bind(this)}>Edit</button></div>
+        //                             </LiComponent>
+        //                         );
+        //                     })}
+        //                 </UlComponent>
+        //             </DescComponent>
+        //             <InputComponent name="tagString" id="tagString" value={this.state.tagString} onChange={this.handleChange.bind(this)} />
+        //             <ButtonComponent onClick={this.handleTagSubmit.bind(this)}>Submit Tags</ButtonComponent>
+        //             <br />
+        //             <InputComponent name="postTagList" id="postTagList" value={this.state.postTagList} onChange={this.handleChange.bind(this)} />
+        //             <br />
+        //             <InputComponent name="post" id="post" value={this.state.post} onChange={this.handleChange.bind(this)} />
+        //             <ButtonComponent onClick={this.handlePostSubmit.bind(this)}>Submit</ButtonComponent>
+
+        //             <ButtonComponent onClick={this.deleteAccount.bind(this)}>Delete profile</ButtonComponent>
+        //             <br />
+        //             <PostsComponent>
+        //             {
+        //                 this.state.posts.map(post => {
+        //                     return (<div>
+        //                         <ParaComponent>{post.post}</ParaComponent>
+        //                         <button id={post._id} onClick={this.handlePostDelete.bind(this)}>Delete</button>
+        //                     </div>)
+        //                 })
+        //             }
+        //             </PostsComponent>
+        //         </div>
+        //         )
     }
 
     render(){

@@ -34,13 +34,8 @@ class TempTagList extends React.Component {
     }
 
     loadPosts(tagFilter) {
-        let addresses = ["0x04895fd3997d99ee472ef0617b6901eea067f8b3", "0xd8ae078a60d54d2da4d5d02439cd93a0494bba00",
-                        "0xbfbb7d674dbe988a5d10a0174a42eb051fc7548e", "0xeee57129b1cbb7169ba2f1b5b300efe1a8cf6391", "0x9cd900574d2861b0f1d5b0ea971eb6f43ea76399", "0x6a9049464bc700743b9dd5591ef574aa1266a01c"]
         if (this.props.metamaskOff === true) {
             return this.setStatePromise({isLoading: false})
-        }
-        if (!addresses.includes(this.props.address)) {
-            return this.setStatePromise({notAuthorized: true, isLoading: false})
         }
         this.setState({isLoading: true})
         let posts = this.props.posts
@@ -143,6 +138,7 @@ class TempTagList extends React.Component {
         if (id !== null && id !== undefined && id !== '') {
             this.props.tagDb.del(id)
                       .then(() => {
+                        NotificationManager.success('Successfully deleted post!', 'Success');
                           this.props.loadTags()
                       })
         }
@@ -163,11 +159,6 @@ class TempTagList extends React.Component {
                 <IconButton style={{marginLeft:20,marginTop:20,marginBottom:20 }} name="thumb_up" />
                 <IconButton style={{marginLeft:10,marginTop:20,marginBottom:20 }} name="thumb_down" />
                 <IconButton style={{marginLeft: 30,marginTop:20,marginBottom:20 }} id={post.id} name="delete" onClick={this.deletePost.bind(this)}/>
-                
-
-                <div>
-                    <input style={{marginLeft:20,marginBottom:20, height: 25 , width: 800,borderRadius:10,borderColor:'gray'}} type="text" placeholder="Comment..!!" className="form-control" />
-                </div>
             </div>
         )
     }
@@ -181,12 +172,6 @@ class TempTagList extends React.Component {
                     <div>
                         {this.state.postList[tag].map(post => {
                             if (post.isSpam === true) {
-                                return (
-                                    <ReactSpoiler blur={7}>
-                                        {this.renderPostCard(tag, post)}
-                                    </ReactSpoiler>
-                                )
-                            } else {
                                 return (<div>{this.renderPostCard(tag, post)}</div>)
                             }
                             
@@ -210,45 +195,7 @@ class TempTagList extends React.Component {
         }
         return (
         <div>
-            <div class="text-styles">
-                <Textfield
-                    onChange={(event) => {
-                        let tagListCommas = event.target.value.match(/,/gi)
-                        if (tagListCommas && tagListCommas.length > 4) {
-                            NotificationManager.warning("Only upto 5 people per post is allowed", "Warning")
-                            return 0
-                        }
-                        return this.setState({tag: event.target.value})}
-                    }
-                    label="Name of person(s) Separated by , (Eg:- Elliot, Whiterose)"
-                    floatingLabel
-                    value={this.state.tag}
-                    style={{width: '500px'}}
-                />
-                <Textfield
-                    onChange={(event) => {
-                        // if (event.target.value.length > this.maxCharacters) {
-                        //     NotificationManager.warning(`Only ${this.maxCharacters} characters are allowed in a post`, "Warning")
-                        //     return 0
-                        // }
-                        return this.setState({post: event.target.value})}
-                    }
-                    label="Post"
-                    floatingLabel
-                    rows={3}
-                    value={this.state.post}
-                    style={{width: '500px'}}
-                />
-                <Captcha 
-                    isLoading = { this.state.isLoading }
-                    ref={this.captchaRef}
-                    setStatePromise={this.setStatePromise}
-                />
-                
-
-                <button onClick={this.handlePostSubmit.bind(this)}>Submit</button>
-            </div>
-
+            <h4>Total number of posts {this.props.posts.length}</h4>
             <Grid>
                 <Cell col={12}>
                 <div className="content">{this.renderPosts()}</div>

@@ -6,9 +6,7 @@ body {
 
 
 .header-color {
-  background: #833ab4;  /* fallback for old browsers */
-  background: -webkit-linear-gradient(to right, #fcb045, #fd1d1d, #833ab4);  /* Chrome 10-25, Safari 5.1-6 */
-  background: linear-gradient(to right, #fcb045, #fd1d1d, #833ab4); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  background: #0b16a5;  /* fallback for old browsers */
 }
 
 .landing-grid {
@@ -41,8 +39,8 @@ button {
 
 /* Resume Page css */
 .resume-right-col {
-  background: #27221F;
-  color: white;
+  background: rgb(255, 255, 255);
+  color: black;
   padding: 2em;
 }
 

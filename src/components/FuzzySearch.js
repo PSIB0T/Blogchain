@@ -78,7 +78,7 @@ class FuzzySearch extends React.Component {
         sortFn(a, b) {
           return a.score - b.score;
         },
-        threshold: 0.6,
+        threshold: 0.35,
         tokenize: false,
         verbose: false,
         autoFocus: false,
@@ -201,7 +201,7 @@ class FuzzySearch extends React.Component {
     const mainClass = classNames('react-fuzzy-search', className);
 
     return (
-      <div className={mainClass} style={{ width }} onKeyDown={this.handleKeyDown}>
+      <div className={mainClass} style={{ width, zIndex: 2}} onKeyDown={this.handleKeyDown}>
         <div style={styles.searchBoxWrapper}>
           <input
             type="text"
