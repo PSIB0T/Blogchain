@@ -29,6 +29,7 @@ class Profile extends React.Component {
             tags: [],
             postTagList: "",
             posts: [],
+            permAddress: null,
             opProps: [
                 {
                     name: 'Nickname',
@@ -185,12 +186,18 @@ class Profile extends React.Component {
         })
         return this.setStatePromise({posts})
     }
-
+    getProfDbAddress() {
+        return this.props.box.public.get('profDb')
+                    .then((address) => {
+                        return this.setStatePromise({permAddress: address})
+                    })
+    }
     async loadFromBox(props) {
         let self = this;
         console.log(this.props)
-        return this.props.box.public.get('profDb')
-                    .then(async (dbAddress) => {
+        return this.getProfDbAddress()
+                    .then(async () => {
+                        dbAddress = this.state.permAddress
                         if (dbAddress === null || dbAddress === undefined) {
                             return this.setStatePromise({
                                 loading: false,
@@ -216,9 +223,10 @@ class Profile extends React.Component {
         }
     }
 
-    handleUpvote(event) {
+    async handleUpvote(event) {
         let id = event.target.id;
-        let address = this.state.profDb.address.toString();
+        let address = this.state.permAddress;
+        console.log(address)
         if (id !== null && id !== undefined && id !== '') {
             post = this.state.postDb.get(id)[0];
             post.upvotes = new Set(post.upvotes) || new Set([])
@@ -241,7 +249,7 @@ class Profile extends React.Component {
     }
     handleDownvote(event) {
         let id = event.target.id;
-        let address = this.state.profDb.address.toString();
+        let address = this.state.permAddress;
         if (id !== null && id !== undefined && id !== '') {
             post = this.state.postDb.get(id)[0];
             post.upvotes = new Set(post.upvotes) || new Set([])
@@ -323,6 +331,9 @@ class Profile extends React.Component {
         } else {
             let dbAddress = this.props.globalDB.get(nick)
             return this.loadProfDb(dbAddress)
+                        .then(() => {
+                            return this.loadpro
+                        })
                         .then(() => {
                             return this.loadPostDb()
                         }).then(() => {
@@ -423,6 +434,8 @@ class Profile extends React.Component {
             <div>
                   <h2>Edit Your Profile </h2>
                   {this.state.opProps.map(opProp => {
+                      if (opProp.prop === "nick")
+                        return
                       return (<div>
                                 <Textfield
                                 onChange={this.handleChange.bind(this)}
