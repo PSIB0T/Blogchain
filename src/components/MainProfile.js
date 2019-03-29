@@ -113,7 +113,6 @@ class MainProfile extends React.Component {
         }
     })
     console.log(posts)
-    // console.log(tags)
     return this.setStatePromise({tagList: tags, posts})
   }
 
@@ -171,8 +170,6 @@ class MainProfile extends React.Component {
               let id = await self.state.ipfs.id()
               let keystore = KeyStore().create(null, this.state.box)
               let orbitdb = new OrbitDB(self.state.ipfs,null, {keystore})
-              // console.log("Orbit db public key is ")
-              // console.log(orbitdb.key.getPublic('hex'))
               self.setStatePromise({orbitdb,id: id.id})
                   .then(() => {
                     resolve("Success")
@@ -220,7 +217,6 @@ class MainProfile extends React.Component {
     } else {
       this.props.history.push("/main/tag/" + event.title)
     }
-    // console.log(event)
   } 
 
   render () {
@@ -254,6 +250,7 @@ class MainProfile extends React.Component {
                 globalDB={this.state.globalDB}
                 match2={this.props.match}
                 tagDbGlobal={this.state.tagDbGlobal}
+                ipfs={this.state.ipfs}
                 />}
               />
             <Route 

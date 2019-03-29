@@ -100,7 +100,6 @@ class TempTagList extends React.Component {
     } 
 
     handlePostSubmit() {
-        // let tempVar = this.captchaRef.current.state.captcha
         this.captchaRef.current.validateCaptcha()
                         .then(() => {
                             if (this.captchaRef.current.state.isValid === false) {

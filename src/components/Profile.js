@@ -347,7 +347,6 @@ class Profile extends React.Component {
             await this.editProp(opProp.prop)
         })
         this.setState({loading: false})
-        // propFind.show = false;   
     }
 
     renderPosts() {
@@ -452,7 +451,6 @@ class Profile extends React.Component {
                             var imageUrl = urlCreator.createObjectURL( blob );
                             this.imageElement.src = imageUrl
                             console.log(imageType(file))
-                            // console.log(file.toString('utf8'))
                         })
     }
 
@@ -529,42 +527,6 @@ class Profile extends React.Component {
               </Grid>
             </div>
           )
-        // return (
-        //         <div>
-        //             <DescComponent>
-        //                 <UlComponent>
-        //                     {this.state.opProps.map((opProp) => {
-        //                         return (
-        //                             <LiComponent><InnerDiv>{opProp.name}</InnerDiv>
-        //                                 {opProp.show?<InnerDiv>{this.state[opProp.prop]}</InnerDiv>:<InnerDiv><input name={opProp.prop  } value={this.state[opProp.prop]} onChange={this.handleChange.bind(this)}/></InnerDiv>}
-        //                                 <div><button id={opProp.prop} onClick={this.handleEdit.bind(this)}>Edit</button></div>
-        //                             </LiComponent>
-        //                         );
-        //                     })}
-        //                 </UlComponent>
-        //             </DescComponent>
-        //             <InputComponent name="tagString" id="tagString" value={this.state.tagString} onChange={this.handleChange.bind(this)} />
-        //             <ButtonComponent onClick={this.handleTagSubmit.bind(this)}>Submit Tags</ButtonComponent>
-        //             <br />
-        //             <InputComponent name="postTagList" id="postTagList" value={this.state.postTagList} onChange={this.handleChange.bind(this)} />
-        //             <br />
-        //             <InputComponent name="post" id="post" value={this.state.post} onChange={this.handleChange.bind(this)} />
-        //             <ButtonComponent onClick={this.handlePostSubmit.bind(this)}>Submit</ButtonComponent>
-
-        //             <ButtonComponent onClick={this.deleteAccount.bind(this)}>Delete profile</ButtonComponent>
-        //             <br />
-        //             <PostsComponent>
-        //             {
-        //                 this.state.posts.map(post => {
-        //                     return (<div>
-        //                         <ParaComponent>{post.post}</ParaComponent>
-        //                         <button id={post._id} onClick={this.handlePostDelete.bind(this)}>Delete</button>
-        //                     </div>)
-        //                 })
-        //             }
-        //             </PostsComponent>
-        //         </div>
-        //         )
     }
 
     render(){

@@ -75,7 +75,6 @@ class TempSession extends React.Component {
                 title: tag
             }
         })
-        // console.log(tags)
         return this.setStatePromise({tagList: tags, posts})
     }
 
@@ -103,7 +102,6 @@ class TempSession extends React.Component {
 
     action(event) {
         let match = this.props.match
-        // console.log(event)
         this.props.history.push("/temp/tag/" + event.title)
     }
 

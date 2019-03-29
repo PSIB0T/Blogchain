@@ -57,9 +57,6 @@ class Captcha extends React.Component {
         this.generateCaptcha()
     }
 
-    // componentDidUpdate(prevProps, prevState) {
-
-    // }
 
     render() {
         return (
