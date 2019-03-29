@@ -29,6 +29,7 @@ class Profile extends React.Component {
             tags: [],
             postTagList: "",
             posts: [],
+            followers: [],
             permAddress: null,
             opProps: [
                 {
@@ -86,7 +87,10 @@ class Profile extends React.Component {
         let profDb = await this.props.orbitdb.keyvalue(nick);
         profDb.set('nick', nick)
               .then(() => {
-                return this.props.globalDB.set(nick, profDb.address.toString())
+                return this.props.globalDB.set(nick, {
+                    address: profDb.address.toString(),
+                    followers: []
+                })
               }).then(() => {
                 return this.props.box.public.set('nick', nick)
               }).then(() => {
@@ -291,6 +295,8 @@ class Profile extends React.Component {
                 [currentVal.prop]: this.state.profDb.get(currentVal.prop) 
             }
         }, {})
+        let followers = this.props.globalDB.get(this.state.nick)?this.props.globalDB.get(this.state.nick).followers:[]
+
         return this.setStatePromise({...profObjects})
                     .then(() => {
                         return this.loadImage(this.state.profDb.get('imageHash'))
@@ -329,7 +335,7 @@ class Profile extends React.Component {
                             console.log(err)
                         })
         } else {
-            let dbAddress = this.props.globalDB.get(nick)
+            let dbAddress = this.props.globalDB.get(nick).address
             return this.loadProfDb(dbAddress)
                         .then(() => {
                             return this.getProfDbAddress()
@@ -448,6 +454,7 @@ class Profile extends React.Component {
                             </div>)
                   })}
                   <Button raised colored onClick={this.handleEdit.bind(this)}>Submit</Button>
+                  <Button raised colored onClick={this.deleteAccount.bind(this)}>Delete profile</Button>
                   <hr style={{borderTop: '3px solid #e22947'}} />
             </div>
         )
@@ -495,6 +502,48 @@ class Profile extends React.Component {
                         })
     }
 
+    followProfile() {
+        let followers = this.state.followers
+        followers = new Set(followers)
+        if (followers.has(this.state.permAddress)) {
+            followers.delete(this.state.permAddress)
+        } else {
+            followers.add(this.state.permAddress)
+        }
+        followers = Array.from(followers)
+        let temp = this.props.globalDB.get(this.state.nick)
+        this.props.globalDB.set(this.state.nick, {...temp, followers})
+                    .then(() => {
+                        return this.setStatePromise({
+                            followers
+                        })
+                    })
+    }
+
+    renderImageOrFollow() {
+        if (this.props.isFriend === false) {
+            return(
+                <div>
+                    <FABButton colored ripple onClick={this.clickInputElement.bind(this)}>
+                        <Icon name="add_a_photo" />
+                        <input type="file" id="upload" style={{display: "none"}} ref={input => this.inputElement = input}
+                            onChange={this.captureFile.bind(this)}
+                        />
+                    </FABButton>
+                </div>
+            )
+        } else {
+            return (
+                <div>
+                    <FABButton colored ripple onClick={this.followProfile.bind(this)}>
+                        <Icon name="add" />
+                    </FABButton>
+                </div>
+            )
+        }
+
+    }
+
     renderProfile() {
         if (this.state.loading === true ) {
             return (<p>Loading...</p>)
@@ -523,13 +572,8 @@ class Profile extends React.Component {
       
                   </div>
              
-      
-                <FABButton colored ripple onClick={this.clickInputElement.bind(this)}>
-                    <Icon name="add" />
-                    <input type="file" id="upload" style={{display: "none"}} ref={input => this.inputElement = input}
-                        onChange={this.captureFile.bind(this)}
-                    />
-                </FABButton>
+                {this.renderImageOrFollow()}
+
                   <h2 style={{paddingTop: '0em'}}>{this.state.fname}</h2>
                   <h4 style={{color: 'grey'}}>{this.state.profession}</h4>
                   <hr style={{borderTop: '3px solid #833fb2', width: '50%'}}/>
@@ -550,7 +594,7 @@ class Profile extends React.Component {
                   }
                   <hr style={{borderTop: '3px solid #833fb2', width: '50%'}}/>
                 <Chip>
-                <ChipContact className="mdl-color--teal mdl-color-text--white">5</ChipContact>
+                <ChipContact className="mdl-color--teal mdl-color-text--white">{this.state.followers.length}</ChipContact>
                 <Link to="/follower">Followers</Link>
                 
                 </Chip>

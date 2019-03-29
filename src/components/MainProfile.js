@@ -76,7 +76,7 @@ class MainProfile extends React.Component {
                     })
   }
   async loadGlobalDb() {
-    let globalDB = await this.state.orbitdb.keyvalue(`/orbitdb/QmeuGQ4KdmdFD8WTN5r5mvF3s6pk1sXG5nXdYxP1dorW7K/globalDatabase`)
+    let globalDB = await this.state.orbitdb.keyvalue(`/orbitdb/QmVZYdvX752poFVuJzCze7GHRPU8qodP3qWLR3hh5EkLip/globalDatabase2`)
     return globalDB.load()
                     .then(() => {
                         console.log("globaldb address")
