@@ -11,7 +11,8 @@ class SetNo extends React.Component {
             postDb: null,
             noAccount: false,
             post: "",
-            postTagList: ""
+            postTagList: "",
+            title: ""
         }
         this.setStatePromise = this.props.setStatePromise
     }
@@ -76,6 +77,16 @@ class SetNo extends React.Component {
                 <div>
                 <Textfield
                 onChange={this.handleChange.bind(this)}
+                value={this.state.title}
+                label="Enter title of post!!"
+                floatingLabel
+                name="title"
+                style={{width: '700px',marginLeft:20}}
+                />
+                </div>
+                <div>
+                <Textfield
+                onChange={this.handleChange.bind(this)}
                 value={this.state.post}
                 label="Whats On your Mind??"
                 floatingLabel
@@ -89,32 +100,7 @@ class SetNo extends React.Component {
                 <CardMenu style={{color: 'black'}}>
                   
                 </CardMenu>
-              </Card>  
-    
-              {/* Project 1 */}
-              <Card shadow={5} style={{width:800,marginLeft:200}}>
-                <CardTitle style={{color: 'black', height: '100px'}} >1000 kg bombs, Mirage 2000 jets: India attacks Pakistan, what we know so far</CardTitle>
-                <CardText>
-                Indian Air Force (IAF) jets crossed the Line of Control (LoC) and destroyed terror camps in Pakistan, sources said. The air strike was carried out in Balakot sector at 3.30 am.            
-                Sources said ten Mirage 2000 aircraft dropped 1,000 kg bombs on terrorist camps across the LoC. As per sources, three control rooms of Jaish-e-Mohammed (JeM) were destroyed in Balakot, Chakoti and Muzzafarabad.
-                </CardText>
-    
-                <CardMenu style={{color: 'black'}}>
-                  <IconButton name="share" />
-                </CardMenu>
-              </Card>  
-             <IconButton style={{marginLeft:200,marginTop:20,marginBottom:20 }} name="thumb_up" />
-             <IconButton style={{marginLeft:10,marginTop:20,marginBottom:20 }} name="thumb_down" />
-             
-    
-            <div>
-            <Textfield
-            onChange={() => {}}
-            label="Comment..!!"
-            floatingLabel
-            style={{width: '800px',marginLeft:200}}
-            />
-            </div>
+              </Card> 
             
     
              <Card shadow={5} style={{width:800,marginLeft:200}}>
@@ -194,12 +180,13 @@ class SetNo extends React.Component {
 
     async handlePostSubmit(event) {
         let post = this.state.post,
-            postDb = this.state.postDb;
+            postDb = this.state.postDb,
             tags = this.state.postTagList.split(",").map(tag => {
                 return tag.trim()
-            })
+            }),
+            title = this.state.title
         
-        postDb.put({_id: Date.now(), post, tags, upvotes: [], downvotes: []})
+        postDb.put({_id: Date.now(), post, tags, title, upvotes: [], downvotes: []})
                 .then((res) => {
                     console.log("Successfully inserted posts")
                 })  

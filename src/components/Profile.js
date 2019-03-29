@@ -332,7 +332,7 @@ class Profile extends React.Component {
             let dbAddress = this.props.globalDB.get(nick)
             return this.loadProfDb(dbAddress)
                         .then(() => {
-                            return this.loadpro
+                            return this.getProfDbAddress()
                         })
                         .then(() => {
                             return this.loadPostDb()
@@ -396,7 +396,7 @@ class Profile extends React.Component {
                     return (
                         <div>
                             <Card shadow={5} style={{width:700,marginLeft:20,marginTop:50}}>
-                                <CardTitle style={{color: 'black', height: '100px'}} >1000 kg bombs</CardTitle>
+                                <CardTitle style={{color: 'black', height: '100px'}} >{post.title}</CardTitle>
                                 <CardText>
                                     {post.post}
                                 </CardText>
