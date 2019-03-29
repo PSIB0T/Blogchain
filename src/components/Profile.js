@@ -304,6 +304,8 @@ class Profile extends React.Component {
                             return this.loadPostDb()
                         }).then(() => {
                             return this.fetchPosts()
+                        }).then(() => {
+                            this.loadImage(this.state.profDb.get('imageHash'))
                         })
         }
 
