@@ -295,9 +295,13 @@ class Profile extends React.Component {
                 [currentVal.prop]: this.state.profDb.get(currentVal.prop) 
             }
         }, {})
-        let followers = this.props.globalDB.get(this.state.nick)?this.props.globalDB.get(this.state.nick).followers:[]
 
         return this.setStatePromise({...profObjects})
+                    .then(() => {
+                        let followers = this.props.globalDB.get(this.state.nick)?this.props.globalDB.get(this.state.nick).followers:[]
+                        console.log(followers)
+                        return this.setStatePromise({followers})
+                    })
                     .then(() => {
                         return this.loadImage(this.state.profDb.get('imageHash'))
                     })
