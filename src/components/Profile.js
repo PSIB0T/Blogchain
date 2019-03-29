@@ -21,6 +21,8 @@ class Profile extends React.Component {
             fname: "",
             email: "",
             post: "",
+            description: "",
+            profession: "",
             profDb: null,
             postDb: null,
             tagString: "",
@@ -45,6 +47,14 @@ class Profile extends React.Component {
                 },{
                     name: 'Fullname',
                     prop: 'fname',
+                    show: false
+                },{
+                    name: 'Description',
+                    prop: 'description',
+                    show: false
+                },{
+                    name: 'Profession',
+                    prop: 'profession',
                     show: false
                 }
             ]
@@ -256,18 +266,28 @@ class Profile extends React.Component {
     async loadProfDb(dbAddress) {
         let profDb = await this.props.orbitdb.keyvalue(dbAddress)
         await profDb.load()
-        let profObjects = this.state.opProps.reduce((prevVal, currentVal) => {
-            return {
-                ...prevVal,
-                [currentVal.prop]: profDb.get(currentVal.prop) 
-            }
-        }, {})
-        return this.setStatePromise({
+
+        this.setStatePromise({
             loading: false,
             noAccount: false,
             profDb,
-            ...profObjects
+        }).then(() => {
+            return this.loadProfDbObjects()
         })       
+    }
+
+    loadProfDbObjects() {
+        let profObjects = this.state.opProps.reduce((prevVal, currentVal) => {
+            return {
+                ...prevVal,
+                [currentVal.prop]: this.state.profDb.get(currentVal.prop) 
+            }
+        }, {})
+        return this.setStatePromise({...profObjects})
+                    .then(() => {
+                        return this.loadImage(this.state.profDb.get('imageHash'))
+                    })
+
     }
 
     async loadPostDb() {
@@ -293,7 +313,10 @@ class Profile extends React.Component {
                         .then(() => {
                             return this.loadTags()
                         }).then(() => {
-                            this.loadImage(this.state.profDb.get('imageHash'))
+                            this.state.profDb.events.on("replicated", () => {
+                                console.log("Profdb replicated!")
+                                this.loadProfDbObjects()
+                            })
                         }).catch(err => {
                             console.log(err)
                         })
@@ -305,7 +328,12 @@ class Profile extends React.Component {
                         }).then(() => {
                             return this.fetchPosts()
                         }).then(() => {
-                            this.loadImage(this.state.profDb.get('imageHash'))
+                            return this.loadImage(this.state.profDb.get('imageHash'))
+                        }).then(() => {
+                            this.state.profDb.events.on("replicated", () => {
+                                console.log("Profdb replicated!")
+                                this.loadProfDbObjects()
+                            })
                         })
         }
 
@@ -443,7 +471,7 @@ class Profile extends React.Component {
 
     loadImage(hash) {
         console.log("Hash is " + hash)
-        this.props.ipfs.files.cat(`/ipfs/${hash}`)
+        return this.props.ipfs.files.cat(`/ipfs/${hash}`)
                         .then(file => {
                             let arrayBufferView = new Uint8Array(file);
                             var blob = new Blob( [ arrayBufferView ], { type:  imageType(file).mime} );
@@ -490,9 +518,9 @@ class Profile extends React.Component {
                     />
                 </FABButton>
                   <h2 style={{paddingTop: '0em'}}>{this.state.fname}</h2>
-                  <h4 style={{color: 'grey'}}>Programmer</h4>
+                  <h4 style={{color: 'grey'}}>{this.state.profession}</h4>
                   <hr style={{borderTop: '3px solid #833fb2', width: '50%'}}/>
-                  <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.</p>
+                  <p>{this.state.description}</p>
                   <hr style={{borderTop: '3px solid #833fb2', width: '50%'}}/>
                   {
                       this.state.opProps.map(opProp => {
