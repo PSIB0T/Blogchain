@@ -8,7 +8,6 @@ let bayes = require('bayes')
 const _ = require('lodash')
 let jsonData = require('./../utils/test.json')
 let {NotificationContainer, NotificationManager} = require('react-notifications');
-let Captcha = require('./captcha')
 
 
 class TempTagList extends React.Component {

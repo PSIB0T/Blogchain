@@ -1,5 +1,6 @@
 const React = require('react')
-const { Tabs, Tab, Grid, Cell, Card, CardTitle, CardText, CardActions, Button, CardMenu, IconButton , Textfield} = require('react-mdl');
+const { Grid, Cell, Card, CardTitle, CardText, Button, CardMenu, IconButton , Textfield} = require('react-mdl');
+let {NotificationContainer, NotificationManager} = require('react-notifications');
 
 const options = [
     { value: 'chocolate', label: 'Chocolate' },
@@ -193,10 +194,26 @@ class SetNo extends React.Component {
                 return tag.trim()
             }),
             title = this.state.title
+        let inputObject = [{
+            name: 'post',
+            variable: post
+        }, {
+            name: 'title',
+            variable: title
+        }]
+
+        for (let i = 0; i < inputObject.length; i++) {
+            console.log(inputObject[i])
+            if (inputObject[i].variable.length === 0) {
+                NotificationManager.error(`Please enter ${inputObject[i].name}`, 'Error');
+                return
+            }
+        }
         
         postDb.put({_id: Date.now(), post, tags, title, upvotes: [], downvotes: []})
                 .then((res) => {
                     console.log("Successfully inserted posts")
+                    NotificationManager.success('Successfully submitted post!', 'Success');
                 })  
     }
 
@@ -226,6 +243,7 @@ class SetNo extends React.Component {
     render() {
         return (
         <div>
+            <NotificationContainer />
             {this.renderComponent()}
           </div>
         );
