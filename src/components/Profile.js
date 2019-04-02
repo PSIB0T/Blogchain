@@ -6,6 +6,7 @@ const { Link } = require('react-router-dom');
 const imageType = require('image-type');
 const _ = require('lodash')
 const fileReaderPullStream = require('pull-file-reader')
+const Modal = require('react-modal');
 
 class Profile extends React.Component {
     constructor(props) {
@@ -21,6 +22,7 @@ class Profile extends React.Component {
             fname: "",
             email: "",
             post: "",
+            modalIsOpen: false,
             description: "",
             profession: "",
             profDb: null,
@@ -31,6 +33,8 @@ class Profile extends React.Component {
             posts: [],
             followers: [],
             permAddress: null,
+            tagIdLabel: "",
+            reputation: 0,
             opProps: [
                 {
                     name: 'Nickname',
@@ -58,6 +62,10 @@ class Profile extends React.Component {
                     name: 'Profession',
                     prop: 'profession',
                     show: false
+                },{
+                    name: "Tags",
+                    prop: "tagString",
+                    show: true
                 }
             ]
         }
@@ -97,14 +105,21 @@ class Profile extends React.Component {
                 return this.props.box.public.set('profDb', profDb.address.toString())
               }).then(() => {
                 return this.setStatePromise({
-                    noAccount: false,
                     profDb
                 })
+              }).then(async () => {
+                    return this.createPostDb()
               }).then(() => {
                   console.log("Success!")
               }).catch((err) => {
                   console.log(err)
               })
+    }
+
+    async createPostDb() {
+        let postDb = await this.props.orbitdb.docs(this.state.nick + "-posts", {write: ['*']})
+        await this.state.profDb.set('postDBUrl', postDb.address.toString())
+        return this.setStatePromise({postDb, noAccount: false})
     }
 
     async deleteAccount() {
@@ -124,27 +139,46 @@ class Profile extends React.Component {
         let tempTags,
             profdburl = this.state.profDb.address.toString()
         console.log(profdburl)
-        newTags.forEach(async (tag) => {
-            tempTags = this.props.tagDbGlobal.query(doc => doc.tag === tag && doc.profile === profdburl)
-            console.log("temptag for " + tag)
-            console.log(tempTags)
-            if (_.isEmpty(tempTags)) {
-                await this.props.tagDbGlobal.put({_id: Date.now(), tag, profile: profdburl})
-            }
-        })
+        newTags = await Promise.all(newTags.map(tag => {
+                        tempTags = this.props.tagDbGlobal.query(doc => doc.tag === tag && doc.profile === profdburl)
+                        if (_.isEmpty(tempTags)) {
+                            // let _id = Date.now() + Math.floor((Math.random() * 100000) + 1).toString()
+                            // console.log(_id)
+                            return this.props.tagDbGlobal.put({
+                                _id: Date.now() + Math.floor((Math.random() * 100000) + 1).toString(), 
+                                tag, 
+                                profile: profdburl
+                            })
+                                        .then(() => Promise.resolve(newTags))
+                        }
+                        return Promise.resolve(newTags)
 
+                    }))
+        tempTags = this.props.tagDbGlobal.query(doc => true)
+        console.log(tempTags)
         let arrayDifference = _.difference(this.state.tags, newTags);
-        arrayDifference.forEach(async (tag) => {
-            tempTags = this.props.tagDbGlobal.query(doc => doc.tag === tag && doc.profile === profdburl)
-            if (!_.isEmpty(tempTags)) {
-                await this.props.tagDbGlobal.del(tempTags[0]._id)
-            }
-        })
+        arrayDifference = await Promise.all(arrayDifference.map(tag => {
+                                        tempTags = this.props.tagDbGlobal.query(doc => doc.tag === tag && doc.profile === profdburl)
+                                        if (!_.isEmpty(tempTags)) {
+                                            return this.props.tagDbGlobal.del(tempTags[0]._id)
+                                                        .then(() => Promise.resolve(tag))
+                                        }
+                                            return Promise.resolve(tag)
+                                    }))
 
-        return Promise.resolve("success")
+        return Promise.resolve(arrayDifference)
     }
 
-    async handleTagSubmit(event) {
+    async deleteTag(){
+        let id = this.state.tagIdLabel
+        if (id === null || id.length === 0 || id === undefined)
+            return
+        // await this.props.tagDbGlobal.del(id)
+        let tempTags = this.props.tagDbGlobal.query(doc => true)
+        console.log(tempTags)
+    }
+
+    async handleTagSubmit() {
         tags = this.state.tagString.split(",").map((tag) => {
             return tag.trim()
         })
@@ -152,6 +186,9 @@ class Profile extends React.Component {
             this.state.profDb.set('tags', tags)
                         .then(() => {
                             return this.handleTags(tags)
+                        })
+                        .then(() => {
+                            return this.props.loadTags()
                         })
                         .then(() => {
                             console.log("Tags set successfully")
@@ -172,7 +209,6 @@ class Profile extends React.Component {
 
     async loadTags() {
         let tags = this.state.profDb.get('tags')
-        console.log(tags)
         if (tags !== null && tags !== undefined) {
             console.log("Inside loadtags")
             let tagString = tags.join(", ")
@@ -182,13 +218,21 @@ class Profile extends React.Component {
     }
 
     async fetchPosts() {
+        let rep = 0
         let postDb
         postDb = this.state.postDb;
+        console.log("In fetchposts")
+        console.log(postDb.address.toString())
         let posts = postDb.query((doc) => true)
         posts.sort((a, b) => {
             return a._id - b._id
         })
-        return this.setStatePromise({posts})
+        posts.map(post => {
+            let upvotes = post.upvotes?post.upvotes.length:0,
+                downvotes = post.downvotes?post.downvotes.length:0;
+            rep = rep + upvotes - downvotes
+        })
+        return this.setStatePromise({posts, reputation: rep})
     }
     getProfDbAddress() {
         return this.props.box.public.get('profDb')
@@ -278,9 +322,7 @@ class Profile extends React.Component {
     async loadProfDb(dbAddress) {
         let profDb = await this.props.orbitdb.keyvalue(dbAddress)
         await profDb.load()
-
         this.setStatePromise({
-            loading: false,
             noAccount: false,
             profDb,
         }).then(() => {
@@ -300,9 +342,10 @@ class Profile extends React.Component {
                     .then(() => {
                         let followers = this.props.globalDB.get(this.state.nick)?this.props.globalDB.get(this.state.nick).followers:[]
                         console.log(followers)
-                        return this.setStatePromise({followers})
-                    })
-                    .then(() => {
+                        return this.setStatePromise({followers, loading: false})
+                    }).then(() => {
+                        return this.loadTags()
+                    }).then(() => {
                         return this.loadImage(this.state.profDb.get('imageHash'))
                     })
 
@@ -311,50 +354,43 @@ class Profile extends React.Component {
     async loadPostDb() {
         let postDbUrl = this.state.profDb.get('postDBUrl')
         if (postDbUrl === undefined) {
-            postDb = await this.props.orbitdb.docs(this.state.nick + "-posts", {write: ['*']})
-            await this.state.profDb.set('postDBUrl', postDb.address.toString())
-        } else {
-            postDb = await this.props.orbitdb.docs(postDbUrl)
-            await postDb.load()
+            if (this.props.isFriend === false) {
+                await this.createPostDb()
+                postDbUrl = this.state.postDb.address.toString()
+                console.log(postDbUrl)
+            } else {
+                return this.setStatePromise({loading: true})
+            }
         }
+        postDb = await this.props.orbitdb.docs(postDbUrl)
+        console.log("Postdburl")
+        console.log(postDbUrl)
+        await postDb.load()
+        postDb.events.on("replicated", () => {
+            console.log("Postdb replicated!")
+            this.fetchPosts()
+        })
         return this.setStatePromise({postDb})
+                    .then(() => {
+                        return this.fetchPosts()
+                    })
     }
 
     async loadGlobalDb(props) {
         let nick = props.match.params.nick
-        this.setState({loading: true})
+        this.setState({loading: true, postDb: null, posts: []})
         if (nick === undefined) {
             return this.loadFromBox(props)
-                        .then(() => {
-                            return this.fetchPosts()
-                        })
-                        .then(() => {
-                            return this.loadTags()
-                        }).then(() => {
-                            this.state.profDb.events.on("replicated", () => {
-                                console.log("Profdb replicated!")
-                                this.loadProfDbObjects()
-                            })
-                        }).catch(err => {
+                        .catch(err => {
                             console.log(err)
                         })
         } else {
-            let dbAddress = this.props.globalDB.get(nick).address
+            let dbAddress = this.props.globalDB.get(nick).address.toString()
             return this.loadProfDb(dbAddress)
                         .then(() => {
                             return this.getProfDbAddress()
-                        })
-                        .then(() => {
+                        }).then(() => {
                             return this.loadPostDb()
-                        }).then(() => {
-                            return this.fetchPosts()
-                        }).then(() => {
-                            return this.loadImage(this.state.profDb.get('imageHash'))
-                        }).then(() => {
-                            this.state.profDb.events.on("replicated", () => {
-                                console.log("Profdb replicated!")
-                                this.loadProfDbObjects()
-                            })
                         })
         }
 
@@ -362,9 +398,11 @@ class Profile extends React.Component {
 
     async editProp(prop) {
         let oldVal = this.state.profDb.get(prop)
-        console.log(oldVal)
         if (oldVal === this.state[prop]) {
             return Promise.resolve()
+        }
+        else if (prop === "tagString") {
+            return this.handleTagSubmit()
         }
         return this.setStatePromise({loading: true})
                     .then(() => {
@@ -377,16 +415,41 @@ class Profile extends React.Component {
                     })
     }
 
+    loadEventEmitters() {
+        console.log("Inside loadeventEmitters")
+        this.state.profDb.events.on("replicated", () => {
+            console.log("Profdb replicated!")
+            if (this.state.postDb === null) {
+                this.loadPostDb()
+            }
+            this.loadProfDbObjects()
+        })
+
+        this.state.profDb.events.on('replicate.progress', (address, hash, entry, progress, have) => {
+            console.log(progress)
+            console.log(address)
+        } )
+
+
+    }
+
     componentDidMount() {
         if (this.props.tagDbGlobal !== null) {
             this.loadGlobalDb(this.props)
+                .then(() => {
+                    this.loadEventEmitters()
+                })
         }
     }
 
     componentWillReceiveProps(nextProps) {
-        if ((nextProps.tagDbGlobal !== null && this.props.tagDbGlobal !== nextProps.tagDbGlobal) || nextProps.isFriend !== this.props.isFriend) {
+        if ((nextProps.tagDbGlobal !== null && this.props.tagDbGlobal !== nextProps.tagDbGlobal) || 
+            this.props.match.params.nick !== nextProps.match.params.nick) {
             console.log("Inside willreceiveprops")
             this.loadGlobalDb(nextProps)
+                .then(() => {
+                    this.loadEventEmitters()
+                })
         }
     }
 
@@ -436,30 +499,61 @@ class Profile extends React.Component {
 
         )
     }
+    openModal() {
+        this.setState({modalIsOpen: true});
+    }
+
+    closeModal() {
+        this.setState({modalIsOpen: false});
+    }
 
     renderEditProfile() {
         if (this.props.isFriend === true)
             return 
         return (
             <div>
-                  <h2>Edit Your Profile </h2>
-                  {this.state.opProps.map(opProp => {
-                      if (opProp.prop === "nick")
-                        return
-                      return (<div>
-                                <Textfield
-                                onChange={this.handleChange.bind(this)}
-                                label={"Edit Your " + opProp.name}
-                                floatingLabel
-                                name={opProp.prop}
-                                style={{width: '200px'}}
-                                value={this.state[opProp.prop]}
-                                />
-                            </div>)
-                  })}
-                  <Button raised colored onClick={this.handleEdit.bind(this)}>Submit</Button>
-                  <Button raised colored onClick={this.deleteAccount.bind(this)}>Delete profile</Button>
-                  <hr style={{borderTop: '3px solid #e22947'}} />
+                <Button raised colored onClick={this.openModal.bind(this)}>Edit Profile</Button>
+                    <div>
+                        <Modal
+                            isOpen={this.state.modalIsOpen}
+                            onRequestClose={this.closeModal}
+                            contentLabel="Example Modal"
+                            style={{
+                                content: {
+                                    top                   : '50%',
+                                    left                  : '50%',
+                                    right                 : 'auto',
+                                    bottom                : 'auto',
+                                    marginRight           : '-50%',
+                                    transform             : 'translate(-50%, -50%)',
+                                },
+                                overlay: {
+                                    zIndex                : '5',
+                                }
+                            }}
+                        >
+                            <h2>Edit Your Profile </h2>
+                            {this.state.opProps.map(opProp => {
+                                if (opProp.prop === "nick")
+                                    return
+                                return (<div>
+                                            <Textfield
+                                            onChange={this.handleChange.bind(this)}
+                                            label={"Edit Your " + opProp.name}
+                                            onBlur={this.handleEdit.bind(this)}
+                                            floatingLabel
+                                            name={opProp.prop}
+                                            style={{width: '500px'}}
+                                            value={this.state[opProp.prop]}
+                                            />
+                                        </div>)
+                            })}
+                            <Button raised colored onClick={this.closeModal.bind(this)}>Submit</Button>
+                        </Modal>
+                        <hr style={{borderTop: '3px solid #e22947'}} />
+                    </div>
+
+
             </div>
         )
     }
@@ -495,13 +589,15 @@ class Profile extends React.Component {
 
     loadImage(hash) {
         console.log("Hash is " + hash)
+        if (hash === undefined)
+            return Promise.resolve()
         return this.props.ipfs.files.cat(`/ipfs/${hash}`)
                         .then(file => {
                             let arrayBufferView = new Uint8Array(file);
                             var blob = new Blob( [ arrayBufferView ], { type:  imageType(file).mime} );
                             var urlCreator = window.URL || window.webkitURL;
                             var imageUrl = urlCreator.createObjectURL( blob );
-                            this.imageElement.src = imageUrl
+                            this.imageElement.style.backgroundImage = `url("${imageUrl}")`
                             console.log(imageType(file))
                         })
     }
@@ -565,14 +661,13 @@ class Profile extends React.Component {
               
               <Grid>
                 <Cell col={4}>
-                  <div style={{textAlign: 'center'}}>
-                  
-                    <img
-                      src="https://www.shareicon.net/download/2015/09/18/103157_man_512x512.png"
-                      alt="avatar"
-                      ref={input => this.imageElement = input}
-                      style={{height: '200px'}}
-                       />
+                  <div style={{
+                                textAlign: 'center', 
+                                height: "200px",
+                                maxWidth: "300px",
+                                backgroundSize: "cover",
+                                backgroundPosition: "center"
+                                }} ref={(input=> this.imageElement = input)}>
       
                   </div>
              
@@ -580,6 +675,11 @@ class Profile extends React.Component {
 
                   <h2 style={{paddingTop: '0em'}}>{this.state.fname}</h2>
                   <h4 style={{color: 'grey'}}>{this.state.profession}</h4>
+                  <Chip>
+                    <ChipContact className="mdl-color--teal mdl-color-text--white">{this.state.reputation}</ChipContact>
+                    Reputation
+                
+                </Chip>
                   <hr style={{borderTop: '3px solid #833fb2', width: '50%'}}/>
                   <p>{this.state.description}</p>
                   <hr style={{borderTop: '3px solid #833fb2', width: '50%'}}/>

@@ -1,6 +1,12 @@
 const React = require('react')
 const { Tabs, Tab, Grid, Cell, Card, CardTitle, CardText, CardActions, Button, CardMenu, IconButton , Textfield} = require('react-mdl');
 
+const options = [
+    { value: 'chocolate', label: 'Chocolate' },
+    { value: 'strawberry', label: 'Strawberry' },
+    { value: 'vanilla', label: 'Vanilla' }
+  ];
+
 class SetNo extends React.Component {
 
     constructor(props) {
@@ -12,7 +18,9 @@ class SetNo extends React.Component {
             noAccount: false,
             post: "",
             postTagList: "",
-            title: ""
+            title: "",
+            selectedOption: null,
+            age: 10
         }
         this.setStatePromise = this.props.setStatePromise
     }
@@ -65,34 +73,34 @@ class SetNo extends React.Component {
                <Card shadow={5} style={{width:800,marginLeft:200,marginBottom:20}}>
                 <CardTitle style={{color: 'black', height: '100px',marginLeft:200}} >Lets Post Something New!!</CardTitle>
                 <div>
-                <Textfield
-                onChange={this.handleChange.bind(this)}
-                value={this.state.postTagList}
-                label="Enter Your #Tags..!!"
-                floatingLabel
-                name="postTagList"
-                style={{width: '700px',marginLeft:20}}
-                />
-                </div>
-                <div>
-                <Textfield
-                onChange={this.handleChange.bind(this)}
-                value={this.state.title}
-                label="Enter title of post!!"
-                floatingLabel
-                name="title"
-                style={{width: '700px',marginLeft:20}}
-                />
-                </div>
-                <div>
-                <Textfield
-                onChange={this.handleChange.bind(this)}
-                value={this.state.post}
-                label="Whats On your Mind??"
-                floatingLabel
-                name="post"
-                style={{width: '700px',marginLeft:20}}
-                />
+                    <Textfield
+                    onChange={this.handleChange.bind(this)}
+                    value={this.state.postTagList}
+                    label="Enter Your #Tags..!!"
+                    floatingLabel
+                    name="postTagList"
+                    style={{width: '700px',marginLeft:20}}
+                    />
+                    </div>
+                    <div>
+                    <Textfield
+                    onChange={this.handleChange.bind(this)}
+                    value={this.state.title}
+                    label="Enter title of post!!"
+                    floatingLabel
+                    name="title"
+                    style={{width: '700px',marginLeft:20}}
+                    />
+                    </div>
+                    <div>
+                    <Textfield
+                    onChange={this.handleChange.bind(this)}
+                    value={this.state.post}
+                    label="Whats On your Mind??"
+                    floatingLabel
+                    name="post"
+                    style={{width: '700px',marginLeft:20}}
+                    />
                 
                 </div> 
                 <div style={{marginLeft:280,paddingBottom:30}}><Button raised colored onClick={this.handlePostSubmit.bind(this)}>Post</Button></div>

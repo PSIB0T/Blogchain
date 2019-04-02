@@ -5,8 +5,8 @@ let { Grid, Cell, Card, CardTitle, CardText,  CardMenu, IconButton, Textfield } 
 let { matchPath } = require('react-router-dom')
 let ReactSpoiler = require('react-spoiler')
 let bayes = require('bayes')
+const _ = require('lodash')
 let jsonData = require('./../utils/test.json')
-let _ = require('lodash')
 let {NotificationContainer, NotificationManager} = require('react-notifications');
 let Captcha = require('./captcha')
 
@@ -25,7 +25,11 @@ class TempTagList extends React.Component {
             captcha: "",
             notAuthorized: false,
             tagList: new Set(),
-            postList: []
+            postList: [],
+            profiles: [],
+            profDbList: [],
+            postDbUrlList: [],
+            knownPostObject: {}
         }
         this.setStatePromise = this.props.setStatePromise
         this.classifier = bayes.fromJson(JSON.stringify(jsonData))
@@ -33,16 +37,13 @@ class TempTagList extends React.Component {
         this.maxCharacters = 140;
     }
 
-    loadPosts(tagFilter) {
+    loadAnonPosts(tagFilter) {
         if (this.props.metamaskOff === true) {
             return this.setStatePromise({isLoading: false})
         }
         this.setState({isLoading: true})
         let posts = this.props.posts
         let tags = new Set(posts.map(post => post.tag))
-        posts.sort((a, b) => {
-            return a._id - b._id
-        })
         if (tagFilter !== undefined && tagFilter !== null) {
             tagFilter = tagFilter.split(",").map(tag => tag.trim())
             tags = Array.from(tags).filter(tag => _.includes(tagFilter, tag))
@@ -60,15 +61,94 @@ class TempTagList extends React.Component {
         })
     }
 
+    loadPosts(tagFilter) {
+        if (tagFilter === undefined || tagFilter === null) {
+            return Promise.resolve()
+        }
+        console.log("Inside loadposts")
+        let profiles = this.props.tagDbGlobal.query(doc => doc.tag === tagFilter)
+                                            .map(res => {
+                                                return res.profile
+                                            })
+        console.log(profiles)
+        profiles = _.difference(profiles, this.state.profiles)
+        console.log(profiles)
+        return this.setStatePromise({profiles})
+                    .then(async () => {
+                        let profDbList = this.state.profDbList;
+                        await Promise.all(profiles.map(async profileAddress => {
+                            let profDb = await this.props.orbitdb.keyvalue(profileAddress)
+                            await profDb.load()
+                            
+                            profDb.events.on("replicated", () => {
+                                console.log("Replicated temptag profdb")
+                                this.loadPostsFromProfile(profDb)
+                            })
+                            profDbList.push(profDb)
+                            return Promise.resolve()
+                        }))
+                        return this.setStatePromise({profDbList})
+                    }).then(() => {
+                        this.state.profDbList.map(profDb => {
+                            this.loadPostsFromProfile(profDb, tagFilter)
+                        })
+                    })
+    }
+
+    async loadPostsFromProfile(profDb, tag) {
+        console.log("Inside loadpostsfromprofile")
+        let postDbUrl = profDb.get('postDBUrl'),
+            nick = profDb.get('nick')
+        if (postDbUrl === null || postDbUrl === undefined) {
+            return Promise.resolve()
+        }
+        let postDb = await this.props.orbitdb.docs(postDbUrl)
+        await postDb.load()
+        if(_.includes(this.state.postDbUrlList, postDb.address.toString())) {
+            return Promise.resolve()
+        }
+        this.state.postDbUrlList.push(postDb.address.toString())
+        postDb.events.on("replicated", () => {
+            console.log("Postdb replicated inside temptags")
+            this.setPostsToProfile(postDb, tag, nick)
+        })
+        return this.setStatePromise({postDbUrlList: this.state.postDbUrlList})
+                    .then(() => this.setPostsToProfile(postDb, tag, nick))
+    }
+
+    setPostsToProfile(postDb, tag, nick) {
+        console.log("Inside setpoststoprofile")
+        let posts = postDb.query(doc => true).filter(post => {
+            return _.includes(post.tags, tag)
+        }).map(post => {
+            return {
+                post: post.post,
+                tag
+            }
+        })
+        console.log(posts)
+        let knownPostObject = this.state.knownPostObject
+        knownPostObject[nick] = posts
+        console.log(knownPostObject)
+        return this.setStatePromise({knownPostObject})
+    }
+
+    loadAllTags(tagFilter) {
+        this.loadAnonPosts(tagFilter)
+            .then(() => {
+                return this.loadPosts(tagFilter)
+            })
+    }
+
     componentDidMount() {
         if (this.props.posts.length !== 0) {
-            this.loadPosts(this.props.match.params.tag)
+            this.loadAllTags(this.props.match.params.tag)
         }
     }
 
     componentDidUpdate(prevProps, prevState) {
         if (prevProps.posts !== this.props.posts || prevProps.match.params.tag !== this.props.match.params.tag) {
-            this.loadPosts(this.props.match.params.tag)   
+            this.loadAllTags(this.props.match.params.tag)
         } 
     }
 
@@ -162,10 +242,28 @@ class TempTagList extends React.Component {
         )
     }
 
+    renderKnownPosts() {
+        for (let key in this.state.knownPostObject) {
+            let posts = this.state.knownPostObject[key]
+            return (
+                <div>
+                    <h3>{key}</h3>
+                    {posts.map(post => {
+                        return (<div>{this.renderPostCard(post.tag, post)}</div>)
+                    })}
+                </div>
+                
+
+            )
+        }
+    }
+
     renderPosts() {
         let tagList = Array.from(this.state.tagList)
         return (
         <div>
+            {this.renderKnownPosts()}
+            <h3>Anonymous</h3>
             {tagList.map((tag) => {
                 return (
                     <div>
@@ -194,7 +292,7 @@ class TempTagList extends React.Component {
         }
         return (
         <div>
-            <h4>Total number of posts {this.props.posts.length}</h4>
+            {/* <h4>Total number of posts {this.props.posts.length}</h4> */}
             <Grid>
                 <Cell col={12}>
                 <div className="content">{this.renderPosts()}</div>

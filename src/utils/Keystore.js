@@ -53,7 +53,6 @@ class Keystore {
 
   getKey(id) {
     let key = JSON.parse(this._storage.getItem(id))
-    console.log(key)
     if (!key)
       return
 

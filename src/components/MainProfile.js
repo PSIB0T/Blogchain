@@ -94,8 +94,13 @@ class MainProfile extends React.Component {
     let tagDbGlobal = await this.state.orbitdb.docs('/orbitdb/QmNwa1jH1F9AmX8P2s7yywp2SBJdrsXwTM4VVyevR2tRrg/tagdbGlobal')
     let tagDb = await this.state.orbitdb.docs('/orbitdb/QmPC79YHyyJM3DcZVyc33GRC2i9ohQD6Nbv9sDaKXMo77T/tagdb2')
     await tagDb.load(5)
-    tagDb.events.on('replicated', () => {
-      console.log("Replicated tagdb!")
+    await tagDbGlobal.load()
+    // tagDb.events.on('replicated', () => {
+    //   console.log("Replicated tagdb!")
+    //   this.loadTags()
+    // })
+    tagDbGlobal.events.on('replicated', () => {
+      console.log("Tagdbglobal replicated")
       this.loadTags()
     })
     return this.setStatePromise({tagDbGlobal, tagDb})
@@ -105,14 +110,22 @@ class MainProfile extends React.Component {
   }
 
   async loadTags() {
+    console.log("Main profile loadtags")
     let posts = this.state.tagDb.query(doc => true)
     let tags = Array.from(new Set(posts.map(post => post.tag)))
+    let tagdbGlobalTags = this.state.tagDbGlobal.query(doc => true)
+                              .map(res => {
+                                return res.tag
+                              })
+    tagdbGlobalTags = Array.from(new Set(tagdbGlobalTags))
+    console.log(tagdbGlobalTags)
+    tags = tags.concat(tagdbGlobalTags)
     tags = tags.map(tag => {
         return {
             title: tag
         }
     })
-    console.log(posts)
+    // console.log(posts)
     return this.setStatePromise({tagList: tags, posts})
   }
 
@@ -121,8 +134,10 @@ class MainProfile extends React.Component {
     let self = this;
     let address, ethereumProvider;
     try {
-      ethereumProvider = window.web3.currentProvider
+      ethereumProvider = window.ethereum
+      await ethereumProvider.enable()
       address = await this.getEthAccounts(window.web3)
+      console.log(address)
       if (address.length === 0) 
         throw "Please log into metamask"
       address = address[0].toString()
@@ -258,6 +273,7 @@ class MainProfile extends React.Component {
               render={(props) => <TempTagList {...props} 
               setStatePromise={this.setStatePromise} 
               tagDb={this.state.tagDb}
+              tagDbGlobal={this.state.tagDbGlobal}
               orbitdb={this.state.orbitdb}
               posts={this.state.posts}
               loadTags={this.loadTags.bind(this)}
@@ -300,6 +316,7 @@ class MainProfile extends React.Component {
                 globalDB={this.state.globalDB}
                 match2={this.props.match}
                 tagDbGlobal={this.state.tagDbGlobal}
+                loadTags={this.loadTags.bind(this)}
                 ipfs={this.state.ipfs}
                 />}
             />
@@ -313,6 +330,7 @@ class MainProfile extends React.Component {
                 box={this.state.box}
                 metamaskOff={this.state.metamaskOff}
                 setStatePromise={this.setStatePromise} 
+                tagList={this.state.tagList}
               />  
             }
             />
