@@ -268,8 +268,12 @@ class TempTagList extends React.Component {
                     <div>
                         {this.state.postList[tag].map(post => {
                             if (post.isSpam === true) {
-                                return (<div>{this.renderPostCard(tag, post)}</div>)
-                            }
+                                return (
+                                    <ReactSpoiler>
+                                        <div>{this.renderPostCard(tag, post)}</div>
+                                    </ReactSpoiler>
+                                )
+                            } return this.renderPostCard(tag, post)
                             
 
                         })}

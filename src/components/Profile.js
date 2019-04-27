@@ -7,6 +7,7 @@ const imageType = require('image-type');
 const _ = require('lodash')
 const fileReaderPullStream = require('pull-file-reader')
 const Modal = require('react-modal');
+let ReactSpoiler = require('react-spoiler')
 
 class Profile extends React.Component {
     constructor(props) {
@@ -273,8 +274,11 @@ class Profile extends React.Component {
 
     async handleUpvote(event) {
         let id = event.target.id;
+        let target = event.target.parentElement
         let address = this.state.permAddress;
-        console.log(address)
+        if (target.nodeName === "BUTTON") {
+            id = target.id
+        }
         if (id !== null && id !== undefined && id !== '') {
             post = this.state.postDb.get(id)[0];
             post.upvotes = new Set(post.upvotes) || new Set([])
@@ -297,7 +301,11 @@ class Profile extends React.Component {
     }
     handleDownvote(event) {
         let id = event.target.id;
+        let target = event.target.parentElement
         let address = this.state.permAddress;
+        if (target.nodeName === "BUTTON") {
+            id = target.id
+        }
         if (id !== null && id !== undefined && id !== '') {
             post = this.state.postDb.get(id)[0];
             post.upvotes = new Set(post.upvotes) || new Set([])
@@ -461,38 +469,49 @@ class Profile extends React.Component {
         this.setState({loading: false})
     }
 
+    renderPost(post) {
+        return (
+            <div>
+                <Card shadow={5} style={{width:700,marginLeft:20,marginTop:50}}>
+                    <CardTitle style={{color: 'black', height: '100px'}} >{post.title}</CardTitle>
+                    <CardText>
+                        {post.post}
+                    </CardText>
+        
+                    <CardMenu style={{color: 'black'}}>
+                    <IconButton name="share" />
+                    </CardMenu>
+                </Card>  
+                <IconButton style={{marginLeft:20,marginTop:20,marginBottom:20 }} id={post._id} onClick={this.handleUpvote.bind(this)} name="thumb_up" />
+                {post.upvotes ? post.upvotes.length : 0}
+                <IconButton style={{marginLeft:10,marginTop:20,marginBottom:20 }} id={post._id} onClick={this.handleDownvote.bind(this)} name="thumb_down" />
+                {post.downvotes ? post.downvotes.length : 0}      
+                <IconButton style={{marginLeft: 30,marginTop:20,marginBottom:20 }} id={post._id} name="delete" onClick={this.deletePost.bind(this)}/>
+                <div>
+                    <Textfield 
+                    onChange={() => {}}
+                    label="Comment..!!"
+                    floatingLabel
+                    style={{width: '800px',marginLeft:20}}
+                    />
+                </div>
+            </div>
+        )
+    }
+
     renderPosts() {
         return (
         <div>
             {
                 this.state.posts.map((post) => {
-                    return (
-                        <div>
-                            <Card shadow={5} style={{width:700,marginLeft:20,marginTop:50}}>
-                                <CardTitle style={{color: 'black', height: '100px'}} >{post.title}</CardTitle>
-                                <CardText>
-                                    {post.post}
-                                </CardText>
-                    
-                                <CardMenu style={{color: 'black'}}>
-                                <IconButton name="share" />
-                                </CardMenu>
-                            </Card>  
-                            <IconButton style={{marginLeft:20,marginTop:20,marginBottom:20 }} id={post._id} onClick={this.handleUpvote.bind(this)} name="thumb_up" />
-                            {post.upvotes ? post.upvotes.length : 0}
-                            <IconButton style={{marginLeft:10,marginTop:20,marginBottom:20 }} id={post._id} onClick={this.handleDownvote.bind(this)} name="thumb_down" />
-                            {post.downvotes ? post.downvotes.length : 0}      
-                            <IconButton style={{marginLeft: 30,marginTop:20,marginBottom:20 }} id={post._id} name="delete" onClick={this.deletePost.bind(this)}/>
-                            <div>
-                                <Textfield 
-                                onChange={() => {}}
-                                label="Comment..!!"
-                                floatingLabel
-                                style={{width: '800px',marginLeft:20}}
-                                />
-                            </div>
-                        </div>
+                    if (post.isSpam === true) {
+                        return (
+                            <ReactSpoiler>
+                                {this.renderPost(post)}
+                            </ReactSpoiler>
                     )
+                    }
+                    return this.renderPost(post);
                 })
             }
         </div>
