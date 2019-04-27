@@ -8,6 +8,7 @@ let bayes = require('bayes')
 const _ = require('lodash')
 let jsonData = require('./../utils/test.json')
 let {NotificationContainer, NotificationManager} = require('react-notifications');
+let Captcha = require('./captcha')
 
 
 class TempTagList extends React.Component {
@@ -295,7 +296,44 @@ class TempTagList extends React.Component {
         }
         return (
         <div>
-            {/* <h4>Total number of posts {this.props.posts.length}</h4> */}
+            <div class="text-styles">
+                <Textfield
+                    onChange={(event) => {
+                        let tagListCommas = event.target.value.match(/,/gi)
+                        if (tagListCommas && tagListCommas.length > 4) {
+                            NotificationManager.warning("Only upto 5 people per post is allowed", "Warning")
+                            return 0
+                        }
+                        return this.setState({tag: event.target.value})}
+                    }
+                    label="Name of person(s) Separated by , (Eg:- Elliot, Whiterose)"
+                    floatingLabel
+                    value={this.state.tag}
+                    style={{width: '500px'}}
+                />
+                <Textfield
+                    onChange={(event) => {
+                        // if (event.target.value.length > this.maxCharacters) {
+                        //     NotificationManager.warning(`Only ${this.maxCharacters} characters are allowed in a post`, "Warning")
+                        //     return 0
+                        // }
+                        return this.setState({post: event.target.value})}
+                    }
+                    label="Post"
+                    floatingLabel
+                    rows={3}
+                    value={this.state.post}
+                    style={{width: '500px'}}
+                />
+                <Captcha 
+                    isLoading = { this.state.isLoading }
+                    ref={this.captchaRef}
+                    setStatePromise={this.setStatePromise}
+                />
+                
+
+                <button onClick={this.handlePostSubmit.bind(this)}>Submit</button>
+            </div>
             <Grid>
                 <Cell col={12}>
                 <div className="content">{this.renderPosts()}</div>
